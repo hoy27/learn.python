@@ -1,0 +1,10 @@
+===== Monthly Report =====
+Company: $company
+Period: $month $year
+
+Total Revenue: $$$revenue
+Total Expenses: $$$expenses
+Net Income: $$$net_income
+
+Prepared by: $author
+===========================

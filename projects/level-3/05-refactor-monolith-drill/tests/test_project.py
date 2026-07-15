@@ -17,6 +17,7 @@ from project import (
     group_by_department,
     load_employees,
     parse_csv,
+    SORT_KEYS
 )
 
 
@@ -58,6 +59,13 @@ def test_load_employees_missing(tmp_path: Path) -> None:
     """Missing file should raise FileNotFoundError."""
     with pytest.raises(FileNotFoundError):
         load_employees(tmp_path / "nope.csv")
+
+
+def test_parse_csv_missing_column() -> None:
+    """salary 컬럼이 없으면 ValueError를 던져야 한다."""
+    bad = "name,department,years\nAda,Eng,3\n"   # salary 컬럼 없음
+    with pytest.raises(ValueError):   # ← 무슨 예외를 기대하죠?
+        parse_csv(bad)
 
 
 def test_group_by_department() -> None:
@@ -103,3 +111,13 @@ def test_format_report_text() -> None:
     text = format_report_text(report)
     assert "Eng" in text
     assert "100,000" in text
+
+def test_sort_by_salary() -> None:
+    depts = [
+        DepartmentStats("Low", 1, 50000, 50000, 50000, 50000, 1.0),
+        DepartmentStats("High", 1, 90000, 90000, 90000, 90000, 1.0),
+    ]
+    result = sorted(depts,key=SORT_KEYS["salary"], reverse=True)
+    assert result[0].name == "High"
+    assert result[1].name == "Low"
+

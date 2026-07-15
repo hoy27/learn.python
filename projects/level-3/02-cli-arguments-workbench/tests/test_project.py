@@ -120,6 +120,29 @@ def test_batch_convert_unknown_operation() -> None:
     assert "error" in results[0]
 
 
+def test_batch_convert_missing_value() -> None:
+    """value 키가 없으면 에러 dict를 내야 한다 (조용히 0으로 실행되면 안 됨)."""
+    ops = [{"category": "weight", "conversion": "kg-to-lbs"}]  # value 없음
+    results = batch_convert(ops)
+    assert "error" in results[0]
+
+
+def test_batch_convert_non_numeric_value() -> None:
+    """숫자가 아닌 value는 에러 dict를 내야 한다 (배치를 크래시시키면 안 됨)."""
+    ops = [{"category": "weight", "conversion": "kg-to-lbs", "value": "value"}]
+    results = batch_convert(ops)
+    assert "error" in results[0]
+    
+
+
+def test_batch_convert_continues_after_bad_item() -> None:
+    """깨진 항목이 있어도 뒤의 정상 항목은 처리돼야 한다."""
+    ops = [{"category": "weight", "conversion": "kg-to-lbs", "value": "value"}, {"category": "temp", "conversion": "c-to-f", "value": 100}]
+    results = batch_convert(ops)
+    assert "error" in results[0]
+    assert "error" not in results[1]
+    ...
+
 # --- Parser tests ---
 
 def test_parser_temp_subcommand() -> None:

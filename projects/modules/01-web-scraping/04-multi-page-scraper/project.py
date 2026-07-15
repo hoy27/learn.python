@@ -34,7 +34,7 @@ def fetch_page(url):
         print(f"  Warning: got status {response.status_code} for {url}")
         return None
 
-    return response.text
+    return response.content
 
 
 def extract_books_from_html(html):
@@ -75,7 +75,7 @@ def scrape_multiple_pages(num_pages):
         # Construct the URL for this page using an f-string.
         # f-strings let you embed variables directly in a string.
         url = f"http://books.toscrape.com/catalogue/page-{page_num}.html"
-        print(f"Page {page_num}: {url}")
+        print(f"Page {page_num}: {url} [{page_num}/{num_pages}]")
 
         # Fetch the page HTML
         html = fetch_page(url)
@@ -114,6 +114,10 @@ def display_sample(books, sample_size=5):
 
 def main():
     # Scrape the configured number of pages
+    if PAGES_TO_SCRAPE == 0:
+        print("Nothing to scrape")
+        return
+    
     all_books = scrape_multiple_pages(PAGES_TO_SCRAPE)
 
     # Print summary

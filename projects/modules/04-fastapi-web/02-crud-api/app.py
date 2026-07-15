@@ -31,19 +31,28 @@ from pydantic import BaseModel
 class TodoCreate(BaseModel):
     """Schema for creating a new todo. Only requires a title."""
     title: str
+    description: str = ""
 
 
 class TodoUpdate(BaseModel):
     """Schema for updating an existing todo. Client sends both fields."""
     title: str
+    description: str = ""
     completed: bool
 
+class TodoPatch(BaseModel):
+    """Schema for updating an existing todo. Client sends both fields."""
+    title: str | None = None
+    description: str | None = None
+    completed: bool | None = None
 
 class TodoResponse(BaseModel):
     """Schema for returning a todo to the client. Includes server-set fields."""
     id: int
     title: str
+    description: str = ""
     completed: bool
+
 
 
 # ============================================================================
@@ -69,14 +78,16 @@ next_id: int = 1
 
 
 @app.get("/todos", response_model=list[TodoResponse])
-def list_todos():
+def list_todos(completed: bool | None = None):
     """Return all todos.
 
     response_model=list[TodoResponse] tells FastAPI to validate and serialize
     the response using the TodoResponse schema. This ensures consistent output.
     """
-    return todos
-
+    if completed is None:
+        return todos
+  
+    return [t for t in todos if t["completed"] == completed]
 
 @app.get("/todos/{todo_id}", response_model=TodoResponse)
 def get_todo(todo_id: int):
@@ -112,6 +123,7 @@ def create_todo(todo: TodoCreate):
     new_todo = {
         "id": next_id,
         "title": todo.title,      # Validated by Pydantic
+        "description": todo.description,
         "completed": False,        # New todos start incomplete
     }
     next_id += 1
@@ -135,12 +147,31 @@ def update_todo(todo_id: int, todo: TodoUpdate):
     for existing_todo in todos:
         if existing_todo["id"] == todo_id:
             existing_todo["title"] = todo.title
+            existing_todo["description"] = todo.description
             existing_todo["completed"] = todo.completed
             return existing_todo
 
     # Todo not found.
     raise HTTPException(status_code=404, detail="Todo not found")
 
+@app.patch("/todos/{todo_id}", response_model=TodoResponse)
+def patch_todo(todo_id: int, todo: TodoPatch):
+    """PATCH로 작성한 함수"""
+    
+    for existing_todo in todos:
+        if existing_todo["id"] == todo_id:
+            if todo.title is not None:              
+                existing_todo["title"] = todo.title
+            if todo.description is not None:              
+                existing_todo["description"] = todo.description
+            if todo.completed is not None:              
+                existing_todo["completed"] = todo.completed
+
+                
+            return existing_todo
+
+    raise HTTPException(status_code=404, detail="Todo not found")
+    
 
 @app.delete("/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_todo(todo_id: int):

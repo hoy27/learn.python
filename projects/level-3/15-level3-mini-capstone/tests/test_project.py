@@ -139,3 +139,19 @@ def test_format_report_text() -> None:
     text = format_report_text(report)
     assert "90/100" in text
     assert "Grade: A" in text
+
+
+def test_analyse_directory_rejects_file(tmp_path: Path) -> None:
+    """디렉토리가 아닌 파일을 주면 NotADirectory"""
+    f = tmp_path / "afile.py"
+    f.write_text("x = 1\n", encoding="utf-8")
+    with pytest.raises(NotADirectoryError):
+        analyse_directory(f)
+
+
+def test_analyse_directory_skips_binary(tmp_path: Path) -> None:
+    """바이너리 파일은 건너뛰고 텍스트 파일만 분석하기"""
+    (tmp_path / "code.py").write_text("def f():\n   pass\n", encoding="utf-8")
+    (tmp_path / "img.jpg").write_bytes(b"\xff\xd8\xff\xe0")
+    metrics = analyse_directory(tmp_path, pattern="*")
+    assert metrics.total_files == 1    

@@ -26,7 +26,7 @@ def fetch_page(url):
         print(f"Failed to fetch page. Status code: {response.status_code}")
         return None
 
-    return response.text
+    return response.content
 
 
 def parse_books(html):
@@ -68,9 +68,12 @@ def parse_books(html):
         # The price is inside a <p> tag with class "price_color".
         # .text gives us the text content of the element, like "£51.77".
         price_tag = article.find("p", class_="price_color")
+        rating_tag = article.find("p", class_="star-rating")
+        
         price = price_tag.text.strip()
+        rating = rating_tag["class"][1]
 
-        books.append((title, price))
+        books.append((title, price, rating))
 
     return books
 
@@ -79,10 +82,10 @@ def display_books(books):
     """Print the list of books in a formatted table."""
     print(f"\nFound {len(books)} books on the page:\n")
 
-    for i, (title, price) in enumerate(books, start=1):
+    for i, (title, price, rating) in enumerate(books, start=1):
         # Format each line so titles and prices line up in columns.
         # :<45 means left-align the title in a 45-character-wide column.
-        print(f"  {i:>3}. {title:<45} {price}")
+        print(f"  {i:>3}. {title:<45} {price} {rating}")
 
 
 def main():

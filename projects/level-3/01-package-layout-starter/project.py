@@ -1,4 +1,4 @@
-"""Level 3 project: Package Layout Starter.
+"""Level 3 project: Package Layo`ut` Starter.
 
 Demonstrates how to structure a Python package with proper imports,
 __init__.py files, and clean module boundaries.
@@ -33,6 +33,8 @@ class PackageInfo:
     author: str = ""
     modules: list[str] = field(default_factory=list)
     entry_point: Optional[str] = None
+    total_functions: int = 0
+    total_classes: int = 0
 
     def to_dict(self) -> dict:
         """Convert to dict for JSON serialisation."""
@@ -62,7 +64,11 @@ def scan_package(root: Path) -> PackageInfo:
     """
     if not root.exists():
         raise FileNotFoundError(f"Package directory not found: {root}")
-
+    
+    if not root.is_dir():
+        raise NotADirectoryError(f"Invalid directory path: {root}")
+    
+    root = root.resolve()
     logger.info("Scanning package at %s", root)
 
     # Check for __init__.py — this makes a directory a package.
@@ -71,8 +77,18 @@ def scan_package(root: Path) -> PackageInfo:
         logger.warning("No __init__.py found — this is not a proper package")
 
     # Find all .py files (modules).
-    py_files = sorted(root.glob("*.py"))
-    module_names = [f.stem for f in py_files if f.name != "__init__.py"]
+    py_files = sorted(f for f in root.glob("*.py") if f.is_file())
+    module_names = [f.stem for f in py_files if f.name != "__init__.py" ]
+
+    # total_functions, total_classes
+    total_functions = 0
+    total_classes = 0
+    for f in py_files:
+        if f.name == "__init__.py":
+            continue
+        info = scan_module(f)
+        total_functions += len(info.functions)
+        total_classes += len(info.classes)
 
     logger.info("Found %d modules: %s", len(module_names), module_names)
 
@@ -80,6 +96,8 @@ def scan_package(root: Path) -> PackageInfo:
         name=root.name,
         modules=module_names,
         entry_point="__main__" if (root / "__main__.py").exists() else None,
+        total_functions=total_functions,
+        total_classes=total_classes
     )
 
 
@@ -90,6 +108,9 @@ def scan_module(path: Path) -> ModuleInfo:
     """
     if not path.exists():
         raise FileNotFoundError(f"Module not found: {path}")
+    
+    if not path.is_file():
+        raise ValueError(f"Not a regular file: {path}")
 
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -145,6 +166,10 @@ def validate_package(root: Path) -> list[dict]:
 
     Returns a list of issue dicts with severity and message.
     """
+
+    if not root.is_dir():
+        raise NotADirectoryError(f"Invalid directory path: {root}") 
+
     issues: list[dict] = []
 
     if not (root / "__init__.py").exists():

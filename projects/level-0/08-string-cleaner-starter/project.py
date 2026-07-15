@@ -1,3 +1,5 @@
+import argparse
+
 """Level 0 project: String Cleaner Starter.
 
 Type messy strings and see them cleaned: strip whitespace,
@@ -25,6 +27,10 @@ def normalise_case(text: str) -> str:
     return text.lower()
 
 
+def normalise_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
 def remove_special_characters(text: str) -> str:
     """Keep only letters, digits, and spaces.
 
@@ -40,6 +46,14 @@ def remove_special_characters(text: str) -> str:
     # Join the list back into a single string.
     return "".join(cleaned)
 
+def remove_digits(text: str) -> str:
+    cleaned = []
+    for char in text:
+        if not char.isdigit():
+            cleaned.append(char)
+
+    return "".join(cleaned)
+
 
 def collapse_spaces(text: str) -> str:
     """Replace multiple consecutive spaces with a single space.
@@ -53,16 +67,30 @@ def collapse_spaces(text: str) -> str:
     return text
 
 
-def clean_string(text: str) -> str:
+STEP_FUNCS = {
+    "strip": strip_whitespace,
+    "lower": normalise_case,
+    "specials": remove_special_characters,
+}
+
+def clean_string(text: str, steps: list[str] = None) -> str:
     """Apply all cleaning steps in order.
 
     WHY chain steps? -- Each function does one small job.
     Chaining them together creates a pipeline where the output
     of one step becomes the input of the next.
     """
+    if steps:
+        for name in steps:
+            text = STEP_FUNCS[name](text)   
+        return text
+                    
+
     result = strip_whitespace(text)
     result = normalise_case(result)
+    result = normalise_whitespace(result)
     result = remove_special_characters(result)
+    result = remove_digits(result)
     result = collapse_spaces(result)
     return result
 
@@ -70,6 +98,17 @@ def clean_string(text: str) -> str:
 # This guard means the code below only runs when you execute the file
 # directly (python project.py), NOT when another file imports it.
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="문자열 클리너")
+    parser.add_argument("--steps", nargs="+")
+    args = parser.parse_args()
+
+    if args.steps:
+        for name in args.steps:
+            if name not in STEP_FUNCS:
+                raise ValueError(f"알 수 없는 단계: {name}")
+
+    print(args.steps)
+
     print("=== String Cleaner ===")
     print("Type messy strings and see them cleaned.")
     print("Enter a blank line to quit.\n")
@@ -82,7 +121,7 @@ if __name__ == "__main__":
         if text == "":
             break
 
-        cleaned = clean_string(text)
+        cleaned = clean_string(text, args.steps)
         print(f"  BEFORE: {text!r}")
         print(f"  AFTER:  {cleaned!r}")
         print()

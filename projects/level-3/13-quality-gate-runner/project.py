@@ -71,6 +71,15 @@ def check_no_syntax_errors(path: Path) -> GateResult:
             duration_ms=round(elapsed, 2),
             message=f"File not found: {path}",
         )
+    
+    if path.suffix != ".py":
+        elapsed = (time.perf_counter() - start) * 1000
+        return GateResult(
+            name=f"syntax:{path.name}",
+            passed=True,
+            duration_ms=round(elapsed, 2),
+            message="Skipped (not a Python file)",
+        )
 
     try:
         source = path.read_text(encoding="utf-8")
@@ -159,13 +168,13 @@ def run_pipeline(gates: list[GateResult]) -> PipelineResult:
     )
 
 
-def run_default_gates(target: Path) -> PipelineResult:
+def run_default_gates(target: Path, max_lines: int = 300) -> PipelineResult:
     """Run all default gates on a Python file."""
     gates: list[GateResult] = [
         check_file_exists(target),
         check_no_syntax_errors(target),
         check_no_print_statements(target),
-        check_file_size(target),
+        check_file_size(target, max_lines),
     ]
     return run_pipeline(gates)
 
@@ -201,7 +210,7 @@ def main() -> None:
     args = parser.parse_args()
 
     target = Path(args.file)
-    result = run_default_gates(target)
+    result = run_default_gates(target, args.max_lines)
 
     if args.json:
         print(json.dumps(asdict(result), indent=2))

@@ -132,18 +132,19 @@ def render_batch(
     return results
 
 
-def build_report_context(data: dict) -> dict:
+# 재귀로 변경
+def build_report_context(data: dict, prefix: str = "") -> dict:
     """Build a flat context dict from nested data.
 
     Flattens one level: {"user": {"name": "X"}} -> {"user_name": "X"}
     """
     flat: dict = {}
     for key, value in data.items():
+        full_key = f"{prefix}_{key}" if prefix else key
         if isinstance(value, dict):
-            for sub_key, sub_value in value.items():
-                flat[f"{key}_{sub_key}"] = sub_value
+            flat.update(build_report_context(value, full_key))
         else:
-            flat[key] = value
+            flat[full_key] = value
     return flat
 
 
@@ -157,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     render.add_argument("template", help="Path to template file")
     render.add_argument("data", help="Path to JSON data file")
     render.add_argument("--strict", action="store_true", help="Strict mode")
+    render.add_argument("--missing", action="store_true", help="List variables not provided by data")
 
     discover = sub.add_parser("discover", help="List variables in a template")
     discover.add_argument("template", help="Path to template file")
@@ -179,9 +181,13 @@ def main() -> None:
         data = json.loads(Path(args.data).read_text(encoding="utf-8"))
         context = build_report_context(data) if any(isinstance(v, dict) for v in data.values()) else data
         result = render_file(Path(args.template), context, strict=args.strict)
-        print(result.output)
-        if result.missing_variables:
-            logger.warning("Missing variables: %s", result.missing_variables)
+        if args.missing:
+            if not result.missing_variables:
+                print("All variables provided ✓")
+            else:
+                print(f"Missing variables: {result.missing_variables}")
+        else:
+            print(result.output)
 
     elif args.command == "discover":
         text = Path(args.template).read_text(encoding="utf-8")

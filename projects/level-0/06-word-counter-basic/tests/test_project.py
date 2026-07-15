@@ -38,3 +38,9 @@ def test_analyse_text_returns_all_keys() -> None:
     assert "unique_words" in result
     assert "top_words" in result
     assert result["words"] == 6
+
+def test_analyse_text_empty() -> None:
+    """If text was empty"""
+    result = analyse_text("")
+    assert result["words"] == 0
+    assert result["avg_word_length"] == 0

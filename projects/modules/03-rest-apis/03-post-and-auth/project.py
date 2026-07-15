@@ -32,6 +32,9 @@ def create_post():
     # json= tells requests to serialize this dict as JSON and set
     # the correct Content-Type header. This is the preferred approach.
     response = requests.post(url, json=new_post)
+    if response.status_code != 201:
+        print(f"Warning: expected 201 but got {response.status_code}")
+        return
 
     print("--- POST: Creating a new post ---")
     print("Status code:", response.status_code)

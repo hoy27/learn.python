@@ -3,6 +3,7 @@
 Demonstrates testing business logic WITHOUT touching the filesystem,
 using InMemoryReader/InMemoryWriter instead of real files.
 """
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +16,9 @@ from project import (
     process_pipeline,
     run,
     transform_records,
+    validate_config,
+    JsonFileReader,
+    CsvFileReader
 )
 
 
@@ -115,3 +119,28 @@ def test_run_filters_in_memory() -> None:
     stats = run(reader, writer, {"required_fields": ["name", "email"]})
     assert stats.total_output == 1
     assert writer.results[0]["name"] == "Alice"
+
+
+def test_validate_config_duplicate() -> None:
+    """rename 대상이 중복이면 ValueError"""
+    config = {"rename_map": {"first_name": "name", "email": "name"}}
+    with pytest.raises(ValueError):
+        validate_config(config)
+
+
+def test_reader_rejects_non_list(tmp_path: Path) -> None:
+    """배열이 아닌 JSON은 TypeError"""
+    f = tmp_path / "bad.json"
+    f.write_text('"just a string"', encoding="utf-8")
+    with pytest.raises(TypeError):
+        JsonFileReader(f).read()
+
+def test_csv_reader(tmp_path: Path) -> None:
+    """CSV를 list[dict]로 파싱"""
+    f = tmp_path / "data.csv"
+    f.write_text("name,age\nAlice,30\nBob,25\n", encoding="utf-8")
+    records = CsvFileReader(f).read()
+    assert records == [
+        {"name": "Alice", "age": "30"},
+        {"name": "Bob", "age": "25"},
+    ]

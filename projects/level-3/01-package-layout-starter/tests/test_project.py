@@ -46,12 +46,24 @@ def test_scan_package_missing(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         scan_package(tmp_path / "nope")
 
+def test_scan_package_not_a_directory(tmp_path: Path) -> None:
+    file_path = tmp_path / "test"
+    file_path.write_text('"""Test file."""\n', encoding="utf-8")
+    with pytest.raises(NotADirectoryError):
+        scan_package(file_path)
+
 
 def test_scan_module(sample_package: Path) -> None:
     """Module scanning should detect functions and classes."""
     info = scan_module(sample_package / "utils.py")
     assert "helper" in info.functions
     assert "Tool" in info.classes
+
+
+def test_scan_module_rejects_directory(tmp_path: Path) -> None:
+    """디렉터리를 넘기면 ValueError가 나야 한다."""
+    with pytest.raises(ValueError):
+        scan_module(tmp_path)   # tmp_path는 디렉터리 → ValueError 나야 함
 
 
 def test_package_info_dataclass() -> None:

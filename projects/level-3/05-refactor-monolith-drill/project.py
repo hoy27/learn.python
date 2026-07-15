@@ -52,6 +52,8 @@ class CompanyReport:
 
 # ── Step 1: Parse ──────────────────────────────────────────────
 
+REQUIRED = {"name", "department", "salary", "years"}
+
 def parse_csv(text: str) -> list[Employee]:
     """Parse CSV text into Employee records.
 
@@ -59,6 +61,10 @@ def parse_csv(text: str) -> list[Employee]:
     """
     reader = csv.DictReader(StringIO(text))
     employees: list[Employee] = []
+
+    missing = REQUIRED - set(reader.fieldnames)
+    if missing:
+        raise ValueError(f"Required fieldnames: {missing!r}")
 
     for row in reader:
         try:
@@ -157,8 +163,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--department", help="Filter to one department")
     parser.add_argument("--log-level", default="INFO")
+    parser.add_argument("--sort-by", choices=["headcount", "salary", "tenure"])
     return parser
 
+
+SORT_KEYS = {
+    "headcount": lambda d: d.headcount,
+    "salary": lambda d: d.avg_salary,
+    "tenure": lambda d: d.avg_tenure,
+}
 
 def main() -> None:
     """Entry point."""
@@ -176,10 +189,15 @@ def main() -> None:
 
     report = build_report(employees)
 
+    if args.sort_by:
+        report.departments = sorted(report.departments, key=SORT_KEYS[args.sort_by], reverse=True)
+
     if args.json:
         print(json.dumps(asdict(report), indent=2))
     else:
         print(format_report_text(report))
+
+
 
 
 if __name__ == "__main__":

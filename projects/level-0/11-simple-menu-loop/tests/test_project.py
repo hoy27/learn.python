@@ -33,3 +33,10 @@ def test_run_batch_stops_at_quit() -> None:
     # Should have 3 results: greet, reverse, goodbye (not the final '1').
     assert len(results) == 3
     assert results[-1]["output"] == "Goodbye!"
+
+def test_execute_choice_missing_argument() -> None:
+    """4번 실행 시 인자가 없을 때 기본값을 줘서 실행해보는 테스트"""
+    assert execute_choice("4") == "Reversed: 'nohtyP'"
+
+def test_execute_count_vowels() -> None:
+    assert execute_choice("6") == "count vowels: '{'o': 1}'"

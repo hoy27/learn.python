@@ -27,11 +27,15 @@ def slugify(text: str) -> str:
 
     'Hello World!' -> 'hello-world'
     """
+    original = text
     text = text.lower().strip()
     text = re.sub(r"[^\w\s-]", "", text)  # Remove non-word chars.
     text = re.sub(r"[\s_]+", "-", text)   # Spaces/underscores to hyphens.
     text = re.sub(r"-+", "-", text)       # Collapse multiple hyphens.
-    return text.strip("-")
+    result = text.strip("-")
+    if not result:
+        raise ValueError(f"Cannot slugify {original!r}: no valid characters")
+    return result
 
 
 def truncate(text: str, max_length: int, suffix: str = "...") -> str:

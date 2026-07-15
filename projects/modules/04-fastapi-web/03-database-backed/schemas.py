@@ -26,6 +26,7 @@ class TodoCreate(BaseModel):
     and created_at automatically.
     """
     title: str
+    priority: int = 0
 
 
 class TodoUpdate(BaseModel):
@@ -50,6 +51,7 @@ class TodoResponse(BaseModel):
     id: int
     title: str
     completed: bool
+    priority: int
     created_at: datetime
 
     model_config = {"from_attributes": True}

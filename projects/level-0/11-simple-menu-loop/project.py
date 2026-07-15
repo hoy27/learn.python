@@ -11,6 +11,7 @@ Concepts: while loops, if/elif/else, break, functions as menu actions.
 import argparse
 import json
 from pathlib import Path
+from collections import Counter
 
 
 # --- Menu action functions ---
@@ -47,6 +48,22 @@ def action_reverse(text: str) -> str:
     """
     return f"Reversed: '{text[::-1]}'"
 
+def action_count_vowels(text: str) -> str:
+    counted = {}
+    for c in text.lower():
+        if c in "aeiou":
+            counted[c] = counted.get(c, 0) + 1
+            # if c in counted:
+            #     counted[c] += 1
+            # else:
+            #     counted[c] = 1
+    return f"count vowels: '{counted}'"
+
+def action_count_vowels_v2(text: str) -> str:
+    vowels = [c for c in text.lower() if c in "aeiou"]
+    counted = dict(Counter(vowels))
+    return f"count vowels: '{counted}'"
+
 
 # --- Menu system ---
 
@@ -56,6 +73,7 @@ MENU_OPTIONS = {
     "3": "Count letters in a word",
     "4": "Reverse a word",
     "5": "Quit",
+    "6": "Count vowels"
 }
 
 
@@ -91,6 +109,8 @@ def execute_choice(choice: str, argument: str = "Python") -> str:
         return action_reverse(argument)
     elif choice == "5":
         return "Goodbye!"
+    elif choice == "6":
+        return action_count_vowels(argument)
     else:
         return f"Unknown option: '{choice}'. Please choose 1-5."
 
@@ -125,6 +145,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", default="data/sample_input.txt",
                         help="File with commands (batch mode)")
     parser.add_argument("--output", default="data/output.json")
+    parser.add_argument("--verbose", action="store_true", help="각 액션 전 메뉴 출력")
     return parser.parse_args()
 
 
@@ -144,12 +165,16 @@ def main() -> None:
     results = run_batch(commands)
 
     for r in results:
+        if args.verbose:
+            print(format_menu())
         print(f"  [{r['command']}] => {r['output']}")
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print(f"\n{len(results)} commands processed. Output: {output_path}")
+
+
 
 
 if __name__ == "__main__":

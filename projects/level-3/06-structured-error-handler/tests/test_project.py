@@ -14,6 +14,7 @@ from project import (
     summarise_results,
     validate_field,
     validate_record,
+    validate_schema
 )
 
 
@@ -136,3 +137,22 @@ def test_summarise_results() -> None:
     assert summary["passed"] == 1
     assert summary["failed"] == 1
     assert summary["error_counts"]["REQUIRED"] == 2
+
+def test_main_missing_file(monkeypatch, capsys):
+    """없는 파일을 주면 traceback 없이 친절한 메시지를 출력해야 한다."""
+    from project import main
+    # sys.argv를 가짜로: [프로그램명, 파일, --schema, 스키마]
+    monkeypatch.setattr("sys.argv", ["project.py", "data/nope.json", "--schema", "data/nope.json"])
+    with pytest.raises(SystemExit):
+        main()   # 예외 없이 정상 종료해야 함 (return으로 빠져나오니까)
+    captured = capsys.readouterr()   # 캡처된 출력 꺼내기
+    assert "not found" in captured.out   # 친절한 메시지가 찍혔나?
+
+def test_validate_schema_bad_rule() -> None:
+    bad_schema = {"name": {"required":True, "typo_rule": 5}}
+    with pytest.raises(ConfigError):
+        validate_schema(bad_schema)
+
+def test_validate_schema_ok() -> None:
+    good_schema = {"name": { "required":True, "min_length": 2 }}
+    validate_schema(good_schema)

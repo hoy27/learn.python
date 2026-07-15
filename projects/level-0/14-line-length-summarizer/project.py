@@ -28,16 +28,26 @@ def compute_stats(lengths: list[int]) -> dict[str, int | float]:
     min() or max() on an empty list crashes.  We check first.
     """
     if not lengths:
-        return {"min": 0, "max": 0, "average": 0.0, "total_lines": 0}
+        return {"min": 0, "max": 0, "average": 0.0, "median": 0, "total_lines": 0}
 
     total = 0
     for length in lengths:
         total += length
 
+    s = sorted(lengths)
+    n = len(s)
+    mid = n // 2
+
+    if n % 2 == 1:
+        median = s[mid]
+    else:
+        median = (s[mid-1]+s[mid]) / 2
+
     return {
         "min": min(lengths),
         "max": max(lengths),
         "average": round(total / len(lengths), 2),
+        "median": median,
         "total_lines": len(lengths),
     }
 
@@ -57,21 +67,21 @@ def build_histogram(lengths: list[int], bar_char: str = "#", scale: int = 2) -> 
     lines = []
     for i, length in enumerate(lengths, start=1):
         bar_width = length // scale
-        bar = bar_char * max(bar_width, 1)  # At least one character.
+        bar = bar_char * min(max(bar_width, 1), 50)  # At least one character.
         lines.append(f"  Line {i:>3}: {bar} ({length})")
 
     return "\n".join(lines)
 
 
-def categorise_lengths(lengths: list[int]) -> dict[str, int]:
+def categorise_lengths(lengths: list[int], short_max: int = 40, long_min: int = 80) -> dict[str, int]:
     """Group lines into short (< 40), medium (40-80), and long (> 80).
 
     WHY categories? -- Raw numbers are harder to scan than categories.
     This gives a quick overview of the file's shape.
     """
-    short = sum(1 for l in lengths if l < 40)
-    medium = sum(1 for l in lengths if 40 <= l <= 80)
-    long = sum(1 for l in lengths if l > 80)
+    short = sum(1 for l in lengths if l < short_max)
+    medium = sum(1 for l in lengths if short_max <= l <= long_min)
+    long = sum(1 for l in lengths if l > long_min)
     return {"short": short, "medium": medium, "long": long}
 
 
@@ -80,6 +90,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Line Length Summarizer")
     parser.add_argument("--input", default="data/sample_input.txt")
     parser.add_argument("--output", default="data/output.json")
+    parser.add_argument("--threshold", type=int, nargs="+", default=[40, 80],
+                    help="경계값. 하나(long_min) 또는 둘(short_max long_min)")
+
     return parser.parse_args()
 
 
@@ -90,11 +103,17 @@ def main() -> None:
     input_path = Path(args.input)
     if not input_path.exists():
         raise FileNotFoundError(f"Input file not found: {input_path}")
+    
+    if len(args.threshold) == 1:
+        short_max, long_min = 40, args.threshold[0]   # 값 1개 → short는 기본 40
+    else:
+        short_max, long_min = args.threshold[0], args.threshold[1]  # 값 2개
+
 
     lines = input_path.read_text(encoding="utf-8").splitlines()
     lengths = measure_lines(lines)
     stats = compute_stats(lengths)
-    categories = categorise_lengths(lengths)
+    categories = categorise_lengths(lengths, short_max, long_min)
 
     print("=== Line Length Summary ===")
     print(f"  Total lines: {stats['total_lines']}")

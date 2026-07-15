@@ -115,6 +115,31 @@ def head(filepath, lines):
     for line in selected:
         click.echo(line.rstrip())
 
+@cli.command()
+@click.argument("filepath", type=click.Path(exists=True))
+# --lines defaults to 5. The user can override it.
+@click.option(
+    "--lines", "-n",
+    default=5,
+    show_default=True,
+    help="Number of lines to display from the last.",
+)
+def tail(filepath, lines):
+    """Show the last N lines of a file."""
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        # Read all lines, then slice. For huge files you could use
+        # itertools.islice, but clarity wins here.
+        all_lines = f.readlines()
+
+    # Slice the list to get only the last N lines.
+    selected = all_lines[-lines:] if lines else []
+
+    # Print each line. rstrip() removes the trailing newline so
+    # click.echo does not double-space the output.
+    for line in selected:
+        click.echo(line.rstrip())
+
 
 # Entry-point guard.
 if __name__ == "__main__":

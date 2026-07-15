@@ -29,13 +29,20 @@ import click
     help="Word to use for the greeting.",
     show_default=True,
 )
+@click.option(
+    "--repeat",
+    default=1,
+    type=int,
+    help="Repeat message an input",
+    show_default=True,
+)
 # is_flag=True means --shout is a boolean toggle: present = True, absent = False.
 @click.option(
     "--shout",
     is_flag=True,
     help="Uppercase the entire output.",
 )
-def greet(name, greeting, shout):
+def greet(name, greeting, shout, repeat):
     """Greet someone by name. A small first step into Click."""
 
     # Build the message from the greeting word and the name argument.
@@ -45,9 +52,14 @@ def greet(name, greeting, shout):
     if shout:
         message = message.upper()
 
+
+    
+
+
     # click.echo() is Click's version of print().
     # It handles encoding issues on Windows and plays nicely with pipes.
-    click.echo(message)
+    for _ in range(repeat):
+        click.echo(message)
 
 
 # Standard Python entry-point guard.

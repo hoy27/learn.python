@@ -1,0 +1,4 @@
+[
+  {"category": "temp", "conversion": "c-to-f", "value": 100},
+  {"category": "weight", "conversion": "kg-to-lbs", "value": 70}
+]

@@ -62,9 +62,21 @@ def parse_ini(text: str) -> ParseResult:
 
         # Section header.
         match = re.match(r"^\[(.+)\]$", stripped)
+        
         if match:
-            current = ParsedSection(name=match.group(1).strip())
-            sections.append(current)
+            # name을 추출
+            name = match.group(1).strip()
+            # sections에서 name이 존재하는지 확인하는 함수 (없으면 None, 있으면 그 name을 돌려줌)
+            existing = next((s for s in sections if s.name == name), None)
+            # 중복 없음
+            if existing is None:
+                # 새 ParsedSection을 만들기
+                current = ParsedSection(name=name)
+                # 그 섹션에 append로 추가
+                sections.append(current)
+            else:
+                # 새 ParsedSection을 만들지 않고 existing의 name을 활용해서 재활용
+                current = existing
             continue
 
         # Key-value pair.
@@ -116,8 +128,8 @@ def parse_key_value(text: str, delimiter: str = "=") -> ParseResult:
 
 def parse_csv_simple(text: str) -> ParseResult:
     """Parse simple CSV text (comma-separated, first row is header).
-
     Uses basic splitting — not the csv module (for learning purposes).
+    csv 모듈을 사용하지 않고 .split(",")를 사용하면 내용 안에 콤마(,)가 들어갔을 때 의도치 않게 split이 진행됨 - csv.DictReader 사용 필요
     """
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     if not lines:

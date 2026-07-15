@@ -15,7 +15,7 @@ import logging
 import os
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Optional
+from typing import Optional, get_type_hints
 
 logger = logging.getLogger(__name__)
 
@@ -139,10 +139,18 @@ def build_config(
         sources.append(ConfigSource(field_name, str(merged.get(field_name, "")), src))
 
     # Coerce types to match AppConfig fields.
-    type_hints = AppConfig.__dataclass_fields__
-    for field_name, field_obj in type_hints.items():
+    type_hints = get_type_hints(AppConfig)
+    unknown = set(merged) - set(type_hints)
+
+    if unknown:
+        raise ValueError(f"Unknown config keys: {unknown}")
+
+    for field_name, field_type in type_hints.items():
         if field_name in merged and isinstance(merged[field_name], str):
-            merged[field_name] = coerce_value(merged[field_name], field_obj.type)
+            try:
+                merged[field_name] = coerce_value(merged[field_name], field_type)
+            except ValueError:
+                raise ValueError(f"Cannot coerce {field_name}={merged[field_name]!r} to {field_type.__name__}")
 
     # Build the final dataclass.
     valid_fields = {k: v for k, v in merged.items() if k in type_hints}

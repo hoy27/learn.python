@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import csv
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional, Protocol
@@ -49,8 +50,22 @@ class JsonFileReader:
         data = json.loads(self.path.read_text(encoding="utf-8"))
         if isinstance(data, dict):
             data = [data]
+        elif not isinstance(data, list):
+            raise TypeError(f"Expected a JSON array of objects, got {type(data).__name__!r}")
         logger.info("Read %d records from %s", len(data), self.path)
         return data
+    
+class CsvFileReader:
+    """Reads records from a CSV File"""
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def read(self) -> list[dict]:
+        if not self.path.exists():
+            raise FileNotFoundError(f"File not found: {self.path!r}")
+        text = self.path.read_text(encoding="utf-8")
+        reader = csv.DictReader(text.splitlines())
+        return list(reader)
 
 
 class JsonFileWriter:
@@ -127,6 +142,12 @@ def transform_records(
         result.append(new_record)
     return result
 
+def validate_config(config: dict) -> None:
+    rename_map = config.get("rename_map", {})
+    targets = list(rename_map.values())
+    if len(targets) != len(set(targets)):
+        raise ValueError(f"Duplicate rename targets: {rename_map}")
+
 
 def enrich_records(records: list[dict], defaults: dict) -> list[dict]:
     """Add default values for missing fields."""
@@ -180,6 +201,7 @@ def run(reader: DataReader, writer: DataWriter, config: dict) -> ProcessingStats
 
     The orchestrator is the only place that touches both I/O and logic.
     """
+    validate_config(config)
     records = reader.read()
 
     results, stats = process_pipeline(
@@ -201,6 +223,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("output", help="Output JSON file")
     parser.add_argument("--config", help="Pipeline config JSON file")
     parser.add_argument("--log-level", default="INFO")
+    parser.add_argument("--format", choices=["json", "csv"], default="json")
     return parser
 
 
@@ -214,7 +237,12 @@ def main() -> None:
     if args.config:
         config = json.loads(Path(args.config).read_text(encoding="utf-8"))
 
-    reader = JsonFileReader(Path(args.input))
+    if args.format == "csv":
+        reader = CsvFileReader(Path(args.input))
+    else:
+        reader = JsonFileReader(Path(args.input))
+
+
     writer = JsonFileWriter(Path(args.output))
     stats = run(reader, writer, config)
 

@@ -64,6 +64,7 @@ def normalise_phone(phone: str) -> NormalisationResult:
     Only works for 10- or 11-digit US numbers.
     """
     digits = re.sub(r"\D", "", phone)
+    rule_applied="us_phone_format"
 
     # Strip leading country code '1' if 11 digits.
     if len(digits) == 11 and digits[0] == "1":
@@ -72,12 +73,15 @@ def normalise_phone(phone: str) -> NormalisationResult:
     if len(digits) == 10:
         formatted = f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
     else:
+        logger.warning("Unparseable Phone %r", phone)
+        rule_applied="unparseable_phone"
         formatted = phone.strip()  # Can't normalise — return as-is.
+
 
     return NormalisationResult(
         original=phone,
         normalised=formatted,
-        rule_applied="us_phone_format",
+        rule_applied=rule_applied,
         changed=formatted != phone,
     )
 
@@ -126,8 +130,14 @@ def normalise_date(date_str: str) -> NormalisationResult:
         normalised = f"{yyyy}-{mm.zfill(2)}-{dd.zfill(2)}"
         return NormalisationResult(date_str, normalised, "yyyy_mm_dd", True)
 
-    # Already YYYY-MM-DD or unrecognised.
-    return NormalisationResult(date_str, date_str, "no_change", False)
+    # 이미 목표 포맷(YYYY-MM-DD)이면 정상 — 경고 없이 통과
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", date_str):
+        return NormalisationResult(date_str, date_str, "no_change", False)
+
+    # 여기까지 왔으면 진짜 인식 불가
+    logger.warning("Unrecognised date %r", date_str)
+    return NormalisationResult(date_str, date_str, "unrecognised_date", False)
+
 
 
 # Registry of all normalisation rules by field type.
@@ -187,11 +197,15 @@ def main() -> None:
     args = parser.parse_args()
 
     # Parse field types from CLI: "email:email,name:name,phone:phone"
-    field_types: dict[str, str] = {}
+    field_types: dict[str, str] = {}        
     for pair in args.fields.split(","):
         parts = pair.strip().split(":")
-        if len(parts) == 2:
-            field_types[parts[0]] = parts[1]
+
+        if len(parts) != 2:
+            raise ValueError(f"Invalid field spec: {pair!r} (expected 'field:type')")
+        if parts[1] not in NORMALISERS:
+            raise ValueError(f"Unknown normaliser {parts[1]!r}. Valid: {sorted(NORMALISERS)}")
+        field_types[parts[0]] = parts[1]
 
     data = json.loads(Path(args.file).read_text(encoding="utf-8"))
     records = data if isinstance(data, list) else [data]

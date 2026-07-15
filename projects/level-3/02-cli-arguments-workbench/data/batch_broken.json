@@ -1,0 +1,5 @@
+[
+  {"category": "weight", "conversion": "kg-to-lbs"},
+  {"category": "weight", "conversion": "kg-to-lbs", "value": "seventy"},
+  {"category": "temp", "conversion": "c-to-f", "value": 100}
+]

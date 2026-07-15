@@ -133,3 +133,15 @@ def test_validate_url_valid() -> None:
 def test_validate_url_invalid() -> None:
     result = validate_url("ftp://bad")
     assert result.valid is False
+
+
+def test_slugify_empty_raises() -> None:
+    """특수문자만 있으면 ValueError"""
+    with pytest.raises(ValueError):
+        slugify("!!!@#$")
+
+
+def test_camel_snake_roundtrip() -> None:
+    """일반적인 snake 식별자는 왕복해야 한다"""
+    for x in ["my_variable_name", "user_id", "total_count"]:
+        assert camel_to_snake(snake_to_camel(x)) == x

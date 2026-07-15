@@ -1,5 +1,6 @@
 """Tests for Level 0 Mini Toolkit."""
 
+import pytest
 from project import clean_string, count_words, find_duplicates, run_tool
 
 
@@ -33,6 +34,6 @@ def test_run_tool_wordcount() -> None:
 
 
 def test_run_tool_unknown() -> None:
-    """An unknown tool name should return an error."""
-    result = run_tool("nope", "text")
-    assert "error" in result
+    """알 수 없는 도구 이름은 ValueError를 던져야 한다."""
+    with pytest.raises(ValueError):
+        run_tool("nonexistent", "some text")

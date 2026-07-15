@@ -99,3 +99,31 @@ def test_service_config_defaults() -> None:
     config = ServiceConfig()
     assert 0 <= config.success_rate <= 1
     assert config.min_latency_ms < config.max_latency_ms
+
+
+def test_rates_over_one_rejected() -> None:
+    """실패율 합이 1.0을 넘으면 인스턴스 생성 거부"""
+    with pytest.raises(ValueError):
+        SimulatedService(ServiceConfig(timeout_rate=0.5, rate_limit_rate=0.5, error_rate=0.4))
+
+
+def test_valid_rates_accepted() -> None:
+    """합이 1.0 이하면 정상 생성"""
+    service = SimulatedService(ServiceConfig(error_rate=0.5))
+    assert service.config.error_rate == 0.5
+
+
+def test_load_test_rejects_zero() -> None:
+    """요청 0개 이하는 거부"""
+    service = SimulatedService(ServiceConfig(seed=42))
+    with pytest.raises(ValueError):
+        run_load_test(service, 0)
+    with pytest.raises(ValueError):
+        run_load_test(service, -5)
+
+
+def test_load_test_valid_count() -> None:
+    """정상 요청 수는 통계를 return함"""
+    service = SimulatedService(ServiceConfig(seed=42))
+    result = run_load_test(service, 10)
+    assert result["total_requests"] == 10

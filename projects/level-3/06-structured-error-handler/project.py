@@ -13,7 +13,11 @@ import argparse
 import json
 import logging
 import traceback
-from dataclasses import dataclass, field, asdict
+import sys
+
+import dataclasses
+from dataclasses import dataclass, asdict 
+
 from pathlib import Path
 from typing import Optional
 
@@ -65,8 +69,8 @@ class ErrorRecord:
     code: str
     message: str
     field: str = ""
-    context: dict = field(default_factory=dict)
-    traceback_lines: list[str] = field(default_factory=list)
+    context: dict = dataclasses.field(default_factory=dict)
+    traceback_lines: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclass
@@ -78,7 +82,7 @@ class OperationResult:
     """
     success: bool
     value: Optional[dict] = None
-    errors: list[ErrorRecord] = field(default_factory=list)
+    errors: list[ErrorRecord] = dataclasses.field(default_factory=list)
 
 
 def capture_error(exc: Exception) -> ErrorRecord:
@@ -210,7 +214,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--schema", required=True, help="JSON file with validation schema")
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--log-level", default="INFO")
+    parser.add_argument("--exit-code", action="store_true", help="Exit non-zero if any record fails")
     return parser
+
+VALID_RULES = {"required", "min_length", "max_length", "pattern"}   # 모듈 레벨
+
+def validate_schema(schema: dict) -> None:
+    """스키마의 모든 규칙 이름이 유효한지 처리 전에 검사. 이상하면 ConfigError."""
+    for field_name, rules in schema.items():
+        validate = set(rules) - VALID_RULES
+        if validate:
+            raise ConfigError(f"Invalid schema: {validate!r}")
 
 
 def main() -> None:
@@ -219,8 +233,17 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    records = json.loads(Path(args.file).read_text(encoding="utf-8"))
-    schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
+    try:
+        records = json.loads(Path(args.file).read_text(encoding="utf-8"))
+        schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
+        validate_schema(schema)
+    except FileNotFoundError as exc:
+        print(f"Error: file not found - {exc.filename}")   # "not found" 유지 → 테스트 통과
+        sys.exit(1)
+    except ConfigError as exc:
+        print(f"Error: {exc}")                              # 스키마 에러는 자체 메시지가 명확
+        sys.exit(1)
+
 
     results = safe_process(records, schema)
     summary = summarise_results(results)
@@ -229,11 +252,15 @@ def main() -> None:
         print(json.dumps(summary, indent=2))
     else:
         print(f"Processed {summary['total']} records: "
-              f"{summary['passed']} passed, {summary['failed']} failed")
+            f"{summary['passed']} passed, {summary['failed']} failed")
         if summary["error_counts"]:
             print("Error breakdown:")
             for code, count in summary["error_counts"].items():
                 print(f"  {code}: {count}")
+
+    if args.exit_code and summary["failed"] > 0:
+        sys.exit(1)
+
 
 
 if __name__ == "__main__":

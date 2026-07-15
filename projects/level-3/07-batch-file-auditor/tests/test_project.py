@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+import sys
 
 from project import (
     AuditIssue,
@@ -13,6 +14,7 @@ from project import (
     check_no_extension,
     run_audit,
     scan_directory,
+    main
 )
 
 
@@ -101,3 +103,27 @@ def test_run_audit_integration(sample_dir: Path) -> None:
     assert any(i.check == "empty_file" for i in report.issues)
     assert any(i.check == "no_extension" for i in report.issues)
     assert "by_severity" in report.summary
+
+def test_run_audit_no_match(sample_dir: Path) -> None:
+    report = run_audit(sample_dir, "*.xyz")
+    assert report.total_files == 0
+    assert report.issues == []
+
+def test_main_non_directory(monkeypatch, capsys):
+    """디렉토리 아닌 입력 -> 친절한 메시지 -> SystemExit"""
+    monkeypatch.setattr("sys.argv",["project.py", "audit", "존재하지않음경로"])
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "Not a directory" in captured.out
+
+def test_scan_recursive(tmp_path: Path) -> None:
+    (tmp_path / "top.py").write_text("x",encoding="utf-8")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "nested.py").write_text("y", encoding="utf-8")
+
+    shallow = scan_directory(tmp_path, "*.py", recursive=False)
+    deep = scan_directory(tmp_path, "*.py", recursive=True)
+    assert len(shallow) == 1
+    assert len(deep) == 2

@@ -21,7 +21,11 @@ def fetch_posts_by_user_params_dict(user_id):
     # handles special characters (spaces, &, =) automatically.
     params = {"userId": user_id}
     response = requests.get(url, params=params)
+
     posts = response.json()
+    if not posts:
+        print("Posts not found")
+        return
 
     print("--- Method 1: params dict ---")
     print("Fetching posts by user {} (using params dict)...".format(user_id))

@@ -73,6 +73,17 @@ def test_parse_ini_sections() -> None:
     assert result.sections[0].name == "db"
     assert result.sections[0].entries["host"] == "localhost"
 
+def test_parse_ini_sections_2nd() -> None:
+    """중복되는 이름의 두 섹션이 병합되는지 테스트"""
+    text = "[database]\nage=30\nname=John\n[database]\nport=9000\n[data]\nname:Oracle"
+    result = parse_ini(text)
+    assert len(result.sections) == 2
+    assert result.sections[0].name == "database"
+    assert result.sections[0].entries["port"] == "9000"   # 2번째 [database]에서 병합됨
+    assert result.sections[0].entries["age"] == "30"      # 1번째 것도 살아있음
+    assert list(result.sections[0].entries.keys()) == ["age", "name", "port"]
+
+
 
 def test_parse_ini_multiple_sections() -> None:
     """Should handle multiple sections."""

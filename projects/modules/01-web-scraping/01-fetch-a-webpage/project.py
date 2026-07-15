@@ -63,16 +63,24 @@ def display_response_info(response):
 def main():
     # books.toscrape.com is a website built specifically for people
     # learning web scraping. It is safe to scrape and will not block you.
-    url = "http://books.toscrape.com/"
+    url = "http://definitely-not-a-real-website-abc123.com/"
 
     # Step 1: Fetch the page
-    response = fetch_page(url)
+    try:
+        response = fetch_page(url)
+    except requests.exceptions.RequestException as exc:
+        print(f"Could not fetch {url}")
+        print("Check your internet connection or the URL and try again.")
+        return
+
 
     # Step 2: Check if the request succeeded
     # Any status code in the 200s means success.
     # The most common success code is 200 ("OK").
     if response.status_code == 200:
         display_response_info(response)
+    elif response.status_code == 404:
+        print("Page not found")
     else:
         print(f"Request failed with status code: {response.status_code}")
         print("This means the server could not return the page you asked for.")

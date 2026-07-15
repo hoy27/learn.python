@@ -62,6 +62,12 @@ def test_timeout():
     print("\n--- Test 4: Timeout (very short limit) ---")
 
     url = "https://jsonplaceholder.typicode.com/posts"
+    
+    timeout = 0
+    if timeout <= 0:                    # 0 이하면 (0 포함!)
+        print(f"Warning: Invalid timeout value - replacing with 10 seconds")      
+        timeout = 10                    # 안전한 기본값으로 교체
+        # 그 아래에서 requests.get(url, timeout=timeout)
 
     try:
         # The timeout parameter sets the maximum time (in seconds) to wait
@@ -69,7 +75,7 @@ def test_timeout():
         # short for any real network request, so this will always time out.
         #
         # In production code, a timeout of 5-30 seconds is typical.
-        requests.get(url, timeout=0.001)
+        requests.get(url, timeout=timeout)
     except requests.exceptions.Timeout:
         print("Timeout: request to {} took longer than 0.001s".format(url))
 

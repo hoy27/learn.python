@@ -61,6 +61,9 @@ class SimulatedService:
 
     def __init__(self, config: Optional[ServiceConfig] = None) -> None:
         self.config = config or ServiceConfig()
+        total = self.config.timeout_rate + self.config.rate_limit_rate + self.config.error_rate
+        if total > 1.0:
+            raise ValueError(f"Failure rates sum to {total}, must be <= 1.0")
         self._rng = random.Random(self.config.seed)
         self._request_count = 0
         self._latencies: list[float] = []
@@ -161,6 +164,10 @@ def run_load_test(
     path: str = "/api/data",
 ) -> dict:
     """Run multiple requests and collect statistics."""
+    if num_requests < 1:
+        raise ValueError(f"num_requests must be >= 1, got {num_requests}")
+
+
     results: dict[int, int] = {}
 
     for _ in range(num_requests):
@@ -210,7 +217,13 @@ def main() -> None:
 
     elif args.command == "load":
         service = SimulatedService(ServiceConfig(seed=args.seed))
-        results = run_load_test(service, args.count)
+        
+        try:
+            results = run_load_test(service, args.count)
+        except ValueError as exc:
+            print(exc)
+            return
+        
         if args.json:
             print(json.dumps(results, indent=2))
         else:

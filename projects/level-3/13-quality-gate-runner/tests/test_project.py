@@ -65,6 +65,13 @@ def test_check_no_syntax_errors_bad(bad_syntax_py: Path) -> None:
     assert result.passed is False
     assert "Syntax error" in result.message
 
+def test_check_no_syntax_skipped_for_non_py(tmp_path: Path) -> None:
+    """.py가 아닐 때"""
+    f = tmp_path / "notes.txt"
+    f.write_text("this is not python at all\n", encoding="utf-8")  # 파이썬으론 문법 오류
+    result = check_no_syntax_errors(f)
+    assert result.passed is True
+    assert "Skipped" in result.message
 
 def test_check_no_print_clean(valid_py: Path) -> None:
     """File without prints should pass."""
@@ -130,3 +137,19 @@ def test_format_pipeline_text() -> None:
     text = format_pipeline_text(result)
     assert "PASS" in text
     assert "test_gate" in text
+
+
+def test_max_lines_threaded(tmp_path: Path) -> None:
+    f = tmp_path / "test.py"
+    f.write_text("\n".join(f"x_{i} = {i}" for i in range(100)), encoding="utf-8")
+    
+    result_fail = run_default_gates(f, max_lines=5)
+    size_fail = next(g for g in result_fail.gates if g.name.startswith("size"))
+    assert size_fail.passed is False
+
+    result_pass = run_default_gates(f, max_lines=100)
+    size_pass = next(g for g in result_pass.gates if g.name.startswith("size"))
+    assert size_pass.passed is True
+
+
+

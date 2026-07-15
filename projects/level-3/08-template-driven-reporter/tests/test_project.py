@@ -101,3 +101,9 @@ def test_build_report_context_nested() -> None:
     assert ctx["user_name"] == "Alice"
     assert ctx["user_email"] == "a@b.com"
     assert ctx["total"] == 10
+
+def test_build_report_context_nested_recursive() -> None:
+    """2단계 이상 중첩도 재귀적으로 평탄화한다."""
+    data = {"company": {"info": {"name": "Acme"}}, "year": "2024"}
+    flat = build_report_context(data)
+    assert flat == {"company_info_name": "Acme", "year": "2024"}

@@ -73,6 +73,9 @@ def clean_string(text: str) -> str:
         output = output.replace("  ", " ")
     return output
 
+def reverse_lines(text: str) -> list[str]:
+    return [line[::-1] for line in text.splitlines()]
+
 
 # --- Toolkit dispatcher ---
 
@@ -95,9 +98,14 @@ def run_tool(tool_name: str, text: str) -> dict[str, object]:
         lines = text.splitlines()
         cleaned = [clean_string(line) for line in lines if line.strip()]
         return {"tool": "clean", "result": cleaned}
+    
+    elif tool_name == "reverse":
+        return {"tool": "reverse", "result": reverse_lines(text)}
+
 
     else:
-        return {"tool": tool_name, "error": f"Unknown tool: {tool_name}"}
+        raise ValueError(f"Unknown tool: {tool_name}. Choose from: wordcount, duplicates, clean")
+
 
 
 def run_all_tools(text: str) -> dict[str, object]:
@@ -110,6 +118,7 @@ def run_all_tools(text: str) -> dict[str, object]:
         "wordcount": count_words(text),
         "duplicates": find_duplicates(text.splitlines()),
         "clean_preview": [clean_string(line) for line in text.splitlines()[:3] if line.strip()],
+        "reverse": reverse_lines(text)
     }
 
 
@@ -118,8 +127,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Level 0 Mini Toolkit")
     parser.add_argument("--input", default="data/sample_input.txt")
     parser.add_argument("--output", default="data/output.json")
-    parser.add_argument("--tool", choices=["wordcount", "duplicates", "clean", "all"],
+    parser.add_argument("--tool", choices=["wordcount", "duplicates", "clean", "reverse", "all"],
                         default="all", help="Which tool to run")
+    parser.add_argument("--all", action="store_true", help="모든 도구 실행 (--tool all과 동일)")
+
     return parser.parse_args()
 
 
@@ -133,7 +144,7 @@ def main() -> None:
 
     text = input_path.read_text(encoding="utf-8")
 
-    if args.tool == "all":
+    if args.tool == "all" or args.all:
         results = run_all_tools(text)
         print("=== Mini Toolkit: All Tools ===\n")
         wc = results["wordcount"]
@@ -143,6 +154,7 @@ def main() -> None:
         for d in dupes:
             print(f"    '{d['text']}' x{d['count']}")
         print(f"  Clean preview: {results['clean_preview'][:3]}")
+        print(f"  reverse: {results['reverse']}")
     else:
         results = run_tool(args.tool, text)
         print(f"=== Tool: {args.tool} ===")

@@ -1,0 +1,8 @@
+Welcome to the Python Quiz!
+
+Question 1 of 1
+What keyword defines a function in Python?: What keyword defines a function in Python?: Wrong! The answer is: def
+
+---
+Final score: 0/1
+Not bad! Review the ones you missed.

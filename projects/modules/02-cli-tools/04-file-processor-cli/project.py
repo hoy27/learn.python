@@ -123,7 +123,11 @@ def process(directory, output, pattern):
     # It figures out the total from len(files) and updates
     # the bar each time the loop body finishes one iteration.
     for filepath in track(files, description="  "):
-        stats = analyze_file(filepath)
+        try:
+            stats = analyze_file(filepath)
+        except UnicodeDecodeError:
+            click.echo(f" Skipping {filepath.name}: not a text file")
+            continue
         results.append(stats)
 
     # Build and display the report.

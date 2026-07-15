@@ -1,0 +1,20 @@
+[
+  {
+    "department": "Engineering",
+    "active": true,
+    "name": "Alice",
+    "email": "alice@example.com"
+  },
+  {
+    "department": "",
+    "active": true,
+    "name": "Carol",
+    "email": "carol@example.com"
+  },
+  {
+    "department": "Engineering",
+    "active": true,
+    "name": "Dave",
+    "email": "dave@example.com"
+  }
+]

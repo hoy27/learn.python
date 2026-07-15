@@ -13,6 +13,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional
@@ -50,7 +51,7 @@ class AuditReport:
     summary: dict = field(default_factory=dict)
 
 
-def scan_directory(root: Path, pattern: str = "*") -> list[FileInfo]:
+def scan_directory(root: Path, pattern: str = "*", recursive: bool = False) -> list[FileInfo]:
     """Scan a directory and collect FileInfo for each matching file.
 
     Only scans immediate children (not recursive).
@@ -59,7 +60,7 @@ def scan_directory(root: Path, pattern: str = "*") -> list[FileInfo]:
         raise NotADirectoryError(f"Not a directory: {root}")
 
     files: list[FileInfo] = []
-    for path in sorted(root.glob(pattern)):
+    for path in sorted(root.rglob(pattern) if recursive else root.glob(pattern)):
         if not path.is_file():
             continue
         stat = path.stat()
@@ -136,9 +137,10 @@ def run_audit(
     root: Path,
     pattern: str = "*",
     max_file_size: int = 1_000_000,
+    recursive: bool = False
 ) -> AuditReport:
     """Run a full audit on a directory."""
-    files = scan_directory(root, pattern)
+    files = scan_directory(root, pattern, recursive)
 
     issues: list[AuditIssue] = []
     issues.extend(check_empty_files(files))
@@ -198,6 +200,7 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--pattern", default="*", help="Glob pattern (e.g., *.csv)")
     audit.add_argument("--max-size", type=int, default=1_000_000, help="Max file size in bytes")
     audit.add_argument("--json", action="store_true")
+    audit.add_argument("--recursive", action="store_true")
 
     scan = sub.add_parser("scan", help="List files in a directory")
     scan.add_argument("directory", help="Directory to scan")
@@ -213,20 +216,27 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    if args.command == "audit":
-        report = run_audit(Path(args.directory), args.pattern, args.max_size)
-        if args.json:
-            print(json.dumps(asdict(report), indent=2))
+    try:
+        if args.command == "audit":
+            report = run_audit(Path(args.directory), args.pattern, args.max_size, args.recursive)
+            if report.total_files == 0  and not args.json:
+                print(f"No files match pattern: {args.pattern!r}")
+
+            if args.json:
+                print(json.dumps(asdict(report), indent=2))
+            else:
+                print(format_report_text(report))
+
+        elif args.command == "scan":
+            files = scan_directory(Path(args.directory), args.pattern)
+            for f in files:
+                print(f"{f.size_bytes:>10,} {f.name}")
+
         else:
-            print(format_report_text(report))
-
-    elif args.command == "scan":
-        files = scan_directory(Path(args.directory), args.pattern)
-        for f in files:
-            print(f"{f.size_bytes:>10,} {f.name}")
-
-    else:
-        parser.print_help()
+            parser.print_help()
+    except NotADirectoryError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

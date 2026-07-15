@@ -34,7 +34,7 @@ def fetch_page(url):
         print(f"Failed to fetch page. Status code: {response.status_code}")
         return None
 
-    return response.text
+    return response.content
 
 
 def extract_books(html):
@@ -106,6 +106,9 @@ def display_table(books):
     :<40 means left-align in a 40-character column. :>8 means right-align
     in an 8-character column.
     """
+    
+    books = sorted(books, key=lambda b: float(b["price"].replace("£", "")))
+
     # Print the header row
     print()
     print(f" {'#':>3}  {'Title':<40} {'Price':<8} {'Rating':<7} {'Available'}")

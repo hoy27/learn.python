@@ -1,0 +1,14 @@
+Results:
+----------------------------------------
+sample1.txt
+  Words: 54   Longest line: 71 chars   Avg line length: 57.3 chars
+
+sample2.txt
+  Words: 50   Longest line: 63 chars   Avg line length: 55.7 chars
+
+sample3.txt
+  Words: 93   Longest line: 92 chars   Avg line length: 75.5 chars
+
+----------------------------------------
+Total files: 3
+Total words: 197

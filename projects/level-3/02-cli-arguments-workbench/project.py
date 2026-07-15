@@ -75,11 +75,20 @@ def lbs_to_kg(lbs: float) -> ConversionResult:
     kg = lbs / 2.20462
     return ConversionResult(lbs, "lbs", round(kg, 4), "kg", "kg = lbs / 2.20462")
 
+def mb_to_kb(mb: int) -> ConversionResult:
+    kb = mb * 1024
+    return ConversionResult(mb, "mb", round(kb, 4), "kb", "kb = mb * 1024")
+
+def kb_to_mb(kb: int) -> ConversionResult:
+    mb = kb / 1024
+    return ConversionResult(kb, "kb", round(mb, 4), "mb", "mb = kb / 1024")
+
 
 CONVERTERS = {
     "temp": {"c-to-f": celsius_to_fahrenheit, "f-to-c": fahrenheit_to_celsius},
     "dist": {"km-to-mi": km_to_miles, "mi-to-km": miles_to_km},
     "weight": {"kg-to-lbs": kg_to_lbs, "lbs-to-kg": lbs_to_kg},
+    "data": {"mb-to-kb": mb_to_kb, "kb-to-mb": kb_to_mb}
 }
 
 
@@ -89,8 +98,14 @@ def batch_convert(operations: list[dict]) -> list[dict]:
     for op in operations:
         category = op.get("category", "")
         conversion = op.get("conversion", "")
-        value = op.get("value", 0)
+        value = op.get("value")
         converter = CONVERTERS.get(category, {}).get(conversion)
+        if value is None:
+            results.append({"error": f"Value is None: {category}/{conversion}"})
+            continue
+        if not isinstance(value, (int, float)):
+            results.append({"error": f"Invalid Value format: {category}/{conversion}"})
+            continue
         if converter:
             result = converter(float(value))
             results.append(asdict(result))
@@ -128,6 +143,13 @@ def build_parser() -> argparse.ArgumentParser:
     weight_group.add_argument("--kg-to-lbs", type=positive_float, metavar="KG")
     weight_group.add_argument("--lbs-to-kg", type=positive_float, metavar="LBS")
 
+    # Data.
+    data = sub.add_parser("data", help="데이터 mb에서 kb로 변환")
+    data_group = data.add_mutually_exclusive_group(required=True)
+    data_group.add_argument("--mb-to-kb", type=int, metavar="MB")
+    data_group.add_argument("--kb-to-mb", type=int, metavar="KB")
+
+
     # Batch from file.
     batch = sub.add_parser("batch", help="Batch conversions from JSON")
     batch.add_argument("file", help="JSON file with operations")
@@ -153,6 +175,8 @@ def main() -> None:
         result = km_to_miles(args.km_to_mi) if args.km_to_mi is not None else miles_to_km(args.mi_to_km)
     elif args.command == "weight":
         result = kg_to_lbs(args.kg_to_lbs) if args.kg_to_lbs is not None else lbs_to_kg(args.lbs_to_kg)
+    elif args.command == "data":
+        result = mb_to_kb(args.mb_to_kb) if args.mb_to_kb is not None else kb_to_mb(args.kb_to_mb)
     elif args.command == "batch":
         data = json.loads(Path(args.file).read_text(encoding="utf-8"))
         print(json.dumps(batch_convert(data), indent=2))

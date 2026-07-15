@@ -67,13 +67,26 @@ def get_db():
 
 
 @app.get("/todos", response_model=list[TodoResponse])
-def list_todos(db: Session = Depends(get_db)):
+def list_todos(db: Session = Depends(get_db), completed: bool | None = None):
     """Return all todos from the database.
 
     db.query(Todo).all() is the SQLAlchemy equivalent of:
         SELECT * FROM todos;
     """
-    return db.query(Todo).all()
+    if completed is None:
+        return db.query(Todo).all() 
+
+    return db.query(Todo).filter(Todo.completed == completed).all()
+
+
+@app.get("/todos/count")
+def count_todos(db: Session = Depends(get_db)):
+    """todos를 COUNT로 집계 결과를 가져옴"""
+    total = db.query(Todo).count()
+    completed = db.query(Todo).filter(Todo.completed == True).count()
+    pending = total - completed
+
+    return { "total": total, "completed": completed, "pending": pending } 
 
 
 @app.get("/todos/{todo_id}", response_model=TodoResponse)

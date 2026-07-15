@@ -47,7 +47,7 @@ def fetch_page(url):
         print(f"  Warning: status {response.status_code} for {url}")
         return None
 
-    return response.text
+    return response.content
 
 
 def extract_books_from_html(html):

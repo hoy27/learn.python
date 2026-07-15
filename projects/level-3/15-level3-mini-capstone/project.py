@@ -14,6 +14,8 @@ import argparse
 import json
 import logging
 import re
+import sys
+
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional
@@ -105,7 +107,7 @@ def analyse_directory(root: Path, pattern: str = "*.py") -> DirectoryMetrics:
             try:
                 metrics = analyse_python_file(path)
                 files.append(metrics)
-            except Exception as exc:
+            except UnicodeDecodeError as exc:
                 logger.warning("Could not analyse %s: %s", path, exc)
 
     total_lines = sum(f.lines for f in files)
@@ -260,14 +262,24 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "report":
-        report = generate_report(Path(args.directory))
+        try:
+            report = generate_report(Path(args.directory))
+        except NotADirectoryError as exc:
+            print(exc)
+            sys.exit(1)
+
         if args.json:
             print(json.dumps(asdict(report), indent=2))
         else:
             print(format_report_text(report))
 
     elif args.command == "scan":
-        metrics = analyse_directory(Path(args.directory), args.pattern)
+        try:
+            metrics = analyse_directory(Path(args.directory), args.pattern)
+        except NotADirectoryError as exc:
+            print(exc)
+            sys.exit(1)
+
         for f in metrics.files:
             print(f"{f.lines:>6} lines  {f.functions:>3} funcs  {f.name}")
         print(f"\nTotal: {metrics.total_files} files, {metrics.total_lines:,} lines")

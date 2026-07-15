@@ -34,3 +34,6 @@ data/streak.json
 
 # macOS metadata
 .DS_Store
+
+# Local SQLite databases
+*.db

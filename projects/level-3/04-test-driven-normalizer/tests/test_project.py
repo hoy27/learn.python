@@ -69,6 +69,14 @@ def test_normalise_phone_invalid() -> None:
     assert result.normalised == "123"
 
 
+@pytest.mark.parametrize("raw,expected_rule", [
+    ("555-HELP", "unparseable_phone"),      # 파싱 불가 전화
+    ("5558675309", "us_phone_format"),      # 정상 전화
+])
+def test_phone_rule_applied(raw: str, expected_rule: str) -> None:
+    assert normalise_phone(raw).rule_applied == expected_rule
+
+
 # --- Name normalisation ---
 
 def test_normalise_name_uppercase() -> None:
@@ -95,6 +103,16 @@ def test_normalise_date(raw: str, expected: str) -> None:
     """Various date formats should normalise to YYYY-MM-DD."""
     result = normalise_date(raw)
     assert result.normalised == expected
+
+@pytest.mark.parametrize("raw,expected_rule", [
+    ("01/15/2024", "mm_dd_yyyy"),        # 변환됨
+    ("2024-03-07", "no_change"),         # 이미 정상
+    ("Jan 15, 2024", "unrecognised_date"),  # 인식 불가
+])
+def test_date_rule_applied(raw: str, expected_rule: str) -> None:
+    result = normalise_date(raw)
+    assert result.rule_applied == expected_rule
+
 
 
 # --- Record and batch normalisation ---

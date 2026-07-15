@@ -86,6 +86,25 @@ class JSONPlaceholderClient:
             # errors are all handled the same way: log and return None.
             print("Error fetching post {}: {}".format(post_id, err))
             return None
+        
+    def get_comments(self, post_id):
+        """
+        post의 comments를 가져옴
+        """
+        url = self._build_url("/posts/{}/comments".format(post_id))
+        try:
+            response = self.session.get(url, timeout=10)
+
+            # For other errors (500, etc.), raise so the except catches it.
+            response.raise_for_status()
+            return response.json()
+
+        except requests.exceptions.RequestException as err:
+            # RequestException is the base class for all requests errors.
+            # Catching it here means connection errors, timeouts, and HTTP
+            # errors are all handled the same way: log and return None.
+            print("Error fetching comments {}: {}".format(post_id, err))
+            return []
 
     def get_posts(self, user_id=None, limit=10):
         """Fetch multiple posts, optionally filtered by user.
@@ -169,6 +188,12 @@ def main():
         if post:
             print("  Title:", post["title"])
             print("  Author user ID:", post["userId"])
+
+        print("\nFetching post 1 comments...")
+        comments = client.get_comments(1)
+        if comments:
+            for c in comments:
+                print(c["email"])
 
         # Fetch posts by a specific user with a limit.
         print("\nFetching posts by user 2 (limit 3)...")

@@ -1,6 +1,6 @@
 """Tests for Line Length Summarizer."""
 
-from project import categorise_lengths, compute_stats, measure_lines
+from project import categorise_lengths, compute_stats, measure_lines, build_histogram
 
 
 def test_measure_lines() -> None:
@@ -15,6 +15,7 @@ def test_compute_stats_normal() -> None:
     assert stats["min"] == 10
     assert stats["max"] == 30
     assert stats["average"] == 20.0
+    assert stats["median"] == 20
     assert stats["total_lines"] == 3
 
 
@@ -33,3 +34,12 @@ def test_categorise_lengths() -> None:
     assert cats["short"] == 2   # 10 and 5
     assert cats["medium"] == 2  # 50 and 75
     assert cats["long"] == 1    # 90
+
+def test_histogram_caps_bar_width() -> None:
+    result = build_histogram([10000])
+    assert result.count("#") <= 50
+
+def test_compute_stats_median() -> None:
+    """중앙값: 홀수 개수는 가운데 값, 짝수 개수는 가운데 두 값의 평균."""
+    assert compute_stats([10, 20, 30])["median"] == 20       # 홀수
+    assert compute_stats([10, 20, 30, 40])["median"] == 25.0  # 짝수

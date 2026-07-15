@@ -1,0 +1,9 @@
+{
+  "company": "Acme Corp",
+  "month": "January",
+  "year": "2024",
+  "revenue": "125000",
+  "expenses": "98000",
+  "net_income": "27000",
+  "author": "Finance Team"
+}

@@ -1,0 +1,17 @@
+{
+  "stats": {
+    "min": 25,
+    "max": 25,
+    "average": 25.0,
+    "median": 25,
+    "total_lines": 1
+  },
+  "categories": {
+    "short": 0,
+    "medium": 1,
+    "long": 0
+  },
+  "lengths": [
+    25
+  ]
+}

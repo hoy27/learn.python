@@ -151,6 +151,11 @@ def format_dashboard(data):
     Takes the parsed JSON dict from Open-Meteo and returns a
     multi-line string ready to print.
     """
+
+    if "current" not in data:
+        return "No current weatehr data available"
+        
+
     current = data["current"]
     units = data["current_units"]
 

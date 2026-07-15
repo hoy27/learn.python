@@ -1,0 +1,5 @@
+{
+    "required_fields": ["first_name", "email"],
+    "rename_map": {"first_name": "name"},
+    "defaults": {"department": "General", "active": true}
+}

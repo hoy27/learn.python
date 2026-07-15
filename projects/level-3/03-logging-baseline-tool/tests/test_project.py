@@ -129,3 +129,8 @@ def test_format_entry_json() -> None:
     entry = LogEntry(timestamp=1.0, level="INFO", source="db", message="OK")
     result = json.loads(format_entry(entry, "json"))
     assert result["level"] == "INFO"
+
+def test_filter_entries_invalid_level() -> None:
+    """오타난 min_level 시 raise ValueError"""
+    with pytest.raises(ValueError):
+        filter_entries([], min_level="WARNIGN")

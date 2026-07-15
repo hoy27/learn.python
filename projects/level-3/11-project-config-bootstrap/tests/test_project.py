@@ -109,3 +109,20 @@ def test_validate_config_negative_retries() -> None:
     config = AppConfig(max_retries=-1)
     issues = validate_config(config)
     assert any("retries" in i.lower() for i in issues)
+
+def test_coerce_bad_value_raises(monkeypatch) -> None:
+    """숫자가 아닌 PORT는 ValueError"""
+    monkeypatch.setenv("APP_PORT", "notanumber")
+    with pytest.raises(ValueError):
+        build_config()
+
+def test_coerce_int(monkeypatch) -> None:
+    monkeypatch.setenv("APP_PORT", "9000")
+    config, _ = build_config()
+    assert config.port == 9000
+
+
+def test_unknown_config_key_raises() -> None:
+    """AppConfig에 없는 키는 ValueError"""
+    with pytest.raises(ValueError):
+        build_config(cli_overrides={"bogus_key": "x"})

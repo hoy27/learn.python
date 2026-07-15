@@ -12,6 +12,7 @@ Run it with:
 """
 
 import click
+import random
 
 # The quiz bank is a list of dictionaries. Each entry has a question
 # and the expected answer (lowercased for case-insensitive comparison).
@@ -78,8 +79,24 @@ def show_result(is_correct, correct_answer):
     is_flag=True,
     help="Skip the 'ready to start?' confirmation.",
 )
-def quiz(questions, no_confirm):
+@click.option(
+    "--shuffle",
+    is_flag=True,
+    help="Shuffle the questions.",
+)
+def quiz(questions, no_confirm, shuffle):
     """An interactive Python quiz with colored feedback."""
+
+    # Decide how many questions to ask.
+    # If the user passed --questions, use that. Otherwise, use all of them.
+    selected = QUIZ_BANK[:questions] if questions is not None else QUIZ_BANK
+    if shuffle:
+        random.shuffle(selected)
+
+    total = len(selected)
+    if not total:
+        click.echo("No questions to ask. Bye!")
+        return
 
     # Print a styled title.
     title = click.style("Welcome to the Python Quiz!", fg="cyan", bold=True)
@@ -93,13 +110,8 @@ def quiz(questions, no_confirm):
         if not ready:
             click.echo("No worries. Come back when you're ready!")
             return
-
-    # Decide how many questions to ask.
-    # If the user passed --questions, use that. Otherwise, use all of them.
-    selected = QUIZ_BANK[:questions] if questions else QUIZ_BANK
-    total = len(selected)
+ 
     score = 0
-
     click.echo("")  # blank line for readability
 
     for index, entry in enumerate(selected, start=1):

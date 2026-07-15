@@ -68,6 +68,18 @@ def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/greet/{name}")
+def greet_name(name: str, uppercase: bool = False):
+    """인사하는 메시지를 출력합니다."""
+    greeting = f"Hello, {name}!"
+    return {"greeting": greeting.upper() if uppercase else greeting}
+
+@app.get("/add/{a}/{b}")
+def add(a: int | float, b: int | float):
+    """두 수를 더합니다."""   
+    return {"result": a + b}
+
+
 # ----------------------------------------------------------------------------
 # Run the server when this file is executed directly.
 #

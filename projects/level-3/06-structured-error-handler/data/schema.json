@@ -1,0 +1,5 @@
+{
+  "name": { "required": true, "min_length": 2, "max_length": 50 },
+  "email": { "required": true, "pattern": "^.+@.+\\..+$" },
+  "age": { "required": true, "pattern": "^\\d{1,3}$" }
+}

@@ -18,12 +18,21 @@ def fetch_single_post():
 
     # The URL points to a single post resource.
     # JSONPlaceholder provides 100 fake posts at /posts/1 through /posts/100.
-    url = "https://jsonplaceholder.typicode.com/posts/1"
+    url = "https://not-a-real-domain-xyz.com/posts/1"
+
 
     # requests.get() sends an HTTP GET request and returns a Response object.
     # The Response object contains everything the server sent back:
     # status code, headers, body, encoding, and more.
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.RequestException as exc:
+        print(f"{exc}")
+        return
+
+    if response.status_code != 200:
+        print(f"Error: got status {response.status_code} for {url}")
+        return
 
     # --- Raw JSON response ---
     # response.json() parses the response body from a JSON string into

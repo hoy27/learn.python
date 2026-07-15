@@ -14,7 +14,17 @@ def count_words(text: str) -> int:
     whitespace (spaces, tabs, newlines) and ignores leading/trailing
     whitespace automatically.
     """
-    return len(text.split())
+    count = 0
+
+    for word in text.split():
+        cleaned = word.strip(".,!?;:\"'()-")
+        count+=1
+        if not cleaned:
+            count-=1
+
+
+    return count
+    # return count
 
 
 def count_lines(text: str) -> int:
@@ -64,10 +74,25 @@ def top_words(freq: dict[str, int], n: int = 5) -> list[tuple[str, int]]:
     return items[:n]
 
 
-def analyse_text(text: str) -> dict[str, int | list[dict[str, str | int]]]:
+def analyse_text(text: str, n: int = 5) -> dict[str, int | list[dict[str, str | int]]]:
     """Run all analyses and return a summary dict."""
     freq = word_frequencies(text)
-    top = top_words(freq, 5)
+    top = top_words(freq, n)
+
+    total_length = 0
+    count = 0
+
+    for word in text.split():
+        cleaned = word.strip(".,!?;:\"'()-")
+        if cleaned:
+            total_length += len(cleaned)
+            count += 1
+
+    if count == 0:
+        avg_word_count = 0
+    else:
+        avg_word_count = total_length / count
+
 
     return {
         "lines": count_lines(text),
@@ -75,6 +100,7 @@ def analyse_text(text: str) -> dict[str, int | list[dict[str, str | int]]]:
         "characters": count_characters(text),
         "unique_words": len(freq),
         "top_words": [{"word": w, "count": c} for w, c in top],
+        "avg_word_length": avg_word_count
     }
 
 
@@ -93,15 +119,24 @@ if __name__ == "__main__":
 
     if not lines:
         print("No text entered.")
+
     else:
+        while True:
+            try:
+                n = int(input("상위 몇개의 단어를 보고싶으신가요? : "))
+                break
+            except ValueError:
+                print("Invalid top words arguments")
+
         text = "\n".join(lines)
-        summary = analyse_text(text)
+        summary = analyse_text(text, n)
 
         print("\n=== Word Count Summary ===")
         print(f"  Lines:      {summary['lines']}")
         print(f"  Words:      {summary['words']}")
         print(f"  Characters: {summary['characters']}")
         print(f"  Unique:     {summary['unique_words']}")
+        print(f"  avg_word_length:     {summary['avg_word_length']}")
         print("\n  Top words:")
         for entry in summary["top_words"]:
             print(f"    {entry['word']}: {entry['count']}")

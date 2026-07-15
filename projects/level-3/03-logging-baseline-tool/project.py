@@ -137,6 +137,10 @@ def filter_entries(
     Level ordering: DEBUG < INFO < WARNING < ERROR < CRITICAL.
     """
     level_order = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3, "CRITICAL": 4}
+    
+    if min_level.upper() not in level_order:
+        raise ValueError(f"Invalid level: {min_level!r}")
+    
     min_rank = level_order.get(min_level.upper(), 0)
 
     result: list[LogEntry] = []
@@ -151,15 +155,23 @@ def filter_entries(
     logger.info("Filtered %d -> %d entries (min_level=%s)", len(entries), len(result), min_level)
     return result
 
+LEVEL_COLORS = {
+    "DEBUG": "\033[90m",     # 회색
+    "INFO": "\033[32m",      # 초록
+    "WARNING": "\033[33m",   # 노랑
+    "ERROR": "\033[31m",     # 빨강
+    "CRITICAL": "\033[1;31m" # 굵은 빨강
+}
+RESET = "\033[0m"
 
-def format_entry(entry: LogEntry, fmt: str = "text") -> str:
-    """Format a single log entry for display.
-
-    Supports 'text' (human-readable) and 'json' formats.
-    """
+def format_entry(entry: LogEntry, fmt: str = "text", color: bool = False) -> str:
     if fmt == "json":
         return json.dumps(asdict(entry))
-    return f"[{entry.level:8s}] {entry.source or '-':12s} | {entry.message}"
+    line = f"[{entry.level:8s}] {entry.source or '-':12s} | {entry.message}"
+    if color:
+        return f"{LEVEL_COLORS.get(entry.level, '')}{line}{RESET}"
+    return line
+
 
 
 def setup_logging(level: str = "INFO", log_file: Optional[Path] = None) -> None:
@@ -194,9 +206,10 @@ def build_parser() -> argparse.ArgumentParser:
     # Parse subcommand.
     parse = sub.add_parser("parse", help="Parse a log file")
     parse.add_argument("file", help="Path to log file")
-    parse.add_argument("--min-level", default="DEBUG", help="Minimum level to show")
+    parse.add_argument("--min-level", default="DEBUG", help="Minimum level to show", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     parse.add_argument("--source", default=None, help="Filter by source")
     parse.add_argument("--json", action="store_true", help="JSON output")
+    parse.add_argument("--output", default=None, help="파일로 출력 (없으면 터미널)")
 
     # Summary subcommand.
     summary = sub.add_parser("summary", help="Summarise a log file")
@@ -219,8 +232,18 @@ def main() -> None:
         entries = parse_log_file(Path(args.file))
         filtered = filter_entries(entries, min_level=args.min_level, source=args.source)
         fmt = "json" if args.json else "text"
-        for entry in filtered:
-            print(format_entry(entry, fmt))
+
+        # use_color = args.output is None   # 터미널이면 True, 파일이면 False
+        lines = [format_entry(entry, fmt, color=args.output is None) for entry in filtered]
+
+        if args.output:
+            Path(args.output).write_text("\n".join(lines) + "\n", encoding="utf-8")
+            logger.info("Wrote %d lines to %s", len(lines), args.output)
+        else:
+            for line in lines:
+                print(line)
+
+
 
     elif args.command == "summary":
         entries = parse_log_file(Path(args.file))

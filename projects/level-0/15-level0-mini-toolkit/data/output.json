@@ -1,0 +1,29 @@
+{
+  "wordcount": {
+    "words": 27,
+    "lines": 9,
+    "characters": 184
+  },
+  "duplicates": [
+    {
+      "text": "Check server status",
+      "count": 2
+    }
+  ],
+  "clean_preview": [
+    "check server status",
+    "deploy new build",
+    "check server status"
+  ],
+  "reverse": [
+    "sutats revres kcehC",
+    "dliub wen yolpeD",
+    "sutats revres kcehC",
+    "!!!stset noitargetni nuR  ",
+    "dliub wen yolped",
+    "noitatnemucod etadpU",
+    "SUTATS REVRES KCEHC",
+    "stset noitargetni nur",
+    "selif gol dlo raelC"
+  ]
+}

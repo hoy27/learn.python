@@ -1,0 +1,5 @@
+first_name,email,department
+Alice,alice@example.com,Engineering
+Bob,,Marketing
+Carol,carol@example.com,
+Dave,dave@example.com,Engineering
