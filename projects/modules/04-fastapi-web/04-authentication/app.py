@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, Base
 from models import User, Todo
-from schemas import UserCreate, UserResponse, Token, TodoCreate, TodoUpdate, TodoResponse
+from schemas import UserCreate, UserResponse, Token, TodoCreate, TodoUpdate, TodoResponse, PasswordChange
 from auth import (
     hash_password,
     verify_password,
@@ -113,6 +113,21 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
 # If the token is missing, invalid, or expired, FastAPI returns 401 before
 # your endpoint code runs. You never see unauthenticated requests.
 # ============================================================================
+
+
+@app.get("/me", response_model=UserResponse)
+def read_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@app.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(payload: PasswordChange, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not verify_password(payload.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=401, detail="이전 비밀번호가 올바르지 않습니다")
+
+    current_user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+
 
 
 @app.get("/todos", response_model=list[TodoResponse])

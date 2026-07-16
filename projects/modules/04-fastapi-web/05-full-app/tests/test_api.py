@@ -1,122 +1,14 @@
 # ============================================================================
 # tests/test_api.py — Integration tests for the full todo API
 # ============================================================================
-# These tests use FastAPI's TestClient, which simulates HTTP requests without
-# starting a real server. TestClient is built on top of httpx, so the API
-# calls look just like real HTTP requests.
+# Shared setup — the in-memory test database, the get_db dependency override,
+# and the `client` / `auth_headers` fixtures — lives in conftest.py so it is
+# defined ONCE and shared with test_project.py (no cross-file pollution).
 #
-# Key testing patterns demonstrated here:
-# 1. Using a separate test database (in-memory SQLite) so tests do not
-#    affect production data.
-# 2. Overriding FastAPI dependencies to swap the database session.
-# 3. Testing both success cases and error cases (401, 404, etc.).
-# 4. Chaining requests (register -> login -> use token -> CRUD operations).
+# These tests use FastAPI's TestClient (in-process, no real server) and cover
+# both success cases and error cases (401, 404, 400).
 #
 # Run: pytest tests/ -v
-# ============================================================================
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from database import Base
-from auth import get_db
-from app import app
-
-# ============================================================================
-# Test database setup
-# ============================================================================
-# We use an in-memory SQLite database for tests. This means:
-# - Tests start with a clean database every time.
-# - Tests run faster (no disk I/O).
-# - Tests do not affect the real database.
-#
-# "sqlite:///" (no file path) creates an in-memory database.
-# ============================================================================
-SQLALCHEMY_DATABASE_URL = "sqlite://"
-
-test_engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
-
-TestingSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine,
-)
-
-
-def override_get_db():
-    """Provide a test database session instead of the real one.
-
-    This function replaces get_db in the app. Every endpoint that uses
-    Depends(get_db) will receive a session connected to the test database.
-    """
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# ----------------------------------------------------------------------------
-# Override the get_db dependency so the app uses our test database.
-# dependency_overrides is a dict that maps original dependencies to
-# replacement functions. This is one of FastAPI's most powerful testing
-# features.
-# ----------------------------------------------------------------------------
-app.dependency_overrides[get_db] = override_get_db
-
-
-# ============================================================================
-# Fixtures
-# ============================================================================
-# Fixtures run before each test. They set up the environment and clean up
-# afterward. The `yield` splits setup (before yield) and teardown (after).
-# ============================================================================
-
-@pytest.fixture(autouse=True)
-def setup_database():
-    """Create all tables before each test, drop them after.
-
-    autouse=True means this fixture runs for every test automatically.
-    You do not need to include it as a parameter in each test function.
-    """
-    # Create all tables in the test database.
-    Base.metadata.create_all(bind=test_engine)
-    yield
-    # Drop all tables after the test. This ensures each test starts fresh.
-    Base.metadata.drop_all(bind=test_engine)
-
-
-@pytest.fixture
-def client():
-    """Provide a TestClient instance for making requests."""
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers(client):
-    """Register a user, log in, and return the Authorization headers.
-
-    Many tests need an authenticated user. This fixture handles the
-    register + login flow and returns ready-to-use headers.
-    """
-    # Register a test user.
-    client.post("/register", json={"username": "testuser", "password": "testpass123"})
-
-    # Log in to get a token.
-    response = client.post("/login", json={"username": "testuser", "password": "testpass123"})
-    token = response.json()["access_token"]
-
-    # Return headers that include the Bearer token.
-    return {"Authorization": f"Bearer {token}"}
-
-
-# ============================================================================
-# Tests
 # ============================================================================
 
 
@@ -246,12 +138,54 @@ def test_delete_todo(client, auth_headers):
 
 
 def test_unauthorized_access(client):
-    """Test that accessing protected endpoints without a token returns 403.
+    """Test that accessing protected endpoints without a token returns 401.
 
-    FastAPI's HTTPBearer returns 403 Forbidden when no credentials are
-    provided (as opposed to 401 when credentials are invalid). This is
-    the expected behavior for missing Bearer tokens.
+    Modern FastAPI's HTTPBearer returns 401 Unauthorized when no credentials
+    are provided (older versions returned 403). 401 is the semantically
+    correct status for "not authenticated" — see auth vs authz.
     """
     # Try to list todos without authentication.
     response = client.get("/todos")
-    assert response.status_code == 403
+    assert response.status_code == 401
+
+def test_todo_stats(client, auth_headers):
+    """stats가 현재 유저의 total/completed/pending을 정확하게 세는지?"""
+    # Create a todo.
+    create_response1 = client.post(
+        "/todos",
+        json={"title": "test todo stats 1"},
+        headers=auth_headers,
+    )
+    create_response2 = client.post(
+        "/todos",
+        json={"title": "test todo stats 2"},
+        headers=auth_headers,
+    )
+    create_response3 = client.post(
+        "/todos",
+        json={"title": "test todo stats 3"},
+        headers=auth_headers,
+    )
+    todo_id1 = create_response1.json()["id"]
+    todo_id2 = create_response2.json()["id"]
+
+    # Update it.
+    client.put(
+        f"/todos/{todo_id1}",
+        json={"title": "updated title", "completed": True},
+        headers=auth_headers,
+    )
+
+    client.put(
+        f"/todos/{todo_id2}",
+        json={"title": "updated title", "completed": True},
+        headers=auth_headers,
+    )
+    
+    response = client.get("/todos/stats", headers=auth_headers)
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["total"] == 3
+    assert data["completed"] == 2
+    assert data["pending"] == 1

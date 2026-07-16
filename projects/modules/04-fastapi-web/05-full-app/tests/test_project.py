@@ -2,54 +2,23 @@
 
 This is the capstone project for the FastAPI module. Tests cover the
 full API: registration, login, CRUD with auth, health check, and
-custom error handling. Uses an in-memory test database.
+custom error handling.
 
-WHY test the full app end-to-end?
-- This project combines all previous FastAPI concepts into one app.
-- End-to-end tests verify the pieces work together, not just individually.
-- They catch integration bugs that unit tests might miss.
+Shared setup (test DB, get_db override, table lifecycle) lives in
+conftest.py — see the WHY note there about avoiding cross-file pollution.
 """
 
-import sys
-import os
-
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from database import Base
 from app import app
-from auth import get_db
 
-# In-memory test database.
-TEST_ENGINE = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
-TestSession = sessionmaker(autocommit=False, autoflush=False, bind=TEST_ENGINE)
-
-
-def override_get_db():
-    db = TestSession()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-
+# The get_db override + table lifecycle come from conftest.py. We only need a
+# client here. raise_server_exceptions=False lets us assert on 500 responses
+# instead of the exception propagating into the test.
 client = TestClient(app, raise_server_exceptions=False)
 
 
-@pytest.fixture(autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=TEST_ENGINE)
-    yield
-    Base.metadata.drop_all(bind=TEST_ENGINE)
-
-
-def register_and_login(username="testuser", password="testpass123"):
+def register_and_login(username="projuser", password="testpass123"):
     """Helper: register a user and return auth headers."""
     client.post("/register", json={"username": username, "password": password})
     login_resp = client.post("/login", json={"username": username, "password": password})
@@ -151,9 +120,13 @@ def test_delete_todo():
 
 
 def test_unauthenticated_access():
-    """Accessing /todos without auth should return 403."""
+    """Accessing /todos without auth should return 401.
+
+    Modern FastAPI HTTPBearer returns 401 for missing credentials (older
+    versions returned 403). 401 = "not authenticated".
+    """
     response = client.get("/todos")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------

@@ -201,6 +201,14 @@ def list_todos(
     """Return all todos belonging to the authenticated user."""
     return db.query(Todo).filter(Todo.user_id == current_user.id).all()
 
+@app.get("/todos/stats", tags=["Todos"], summary="Todo statistics")
+def todo_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+
+    total = db.query(Todo).filter(Todo.user_id == current_user.id).count()
+    completed = db.query(Todo).filter(Todo.user_id == current_user.id, Todo.completed == True).count()
+    pending = total - completed
+
+    return { "total": total, "completed": completed, "pending": pending }
 
 @app.get(
     "/todos/{todo_id}",

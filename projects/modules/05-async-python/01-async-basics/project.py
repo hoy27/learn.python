@@ -19,8 +19,8 @@ import time
 # ── A simple async task ──────────────────────────────────────────────
 #
 # This function is a "coroutine" because it uses "async def".
-# When you call it, it does NOT run immediately — it returns a coroutine
-# object. You must "await" it or pass it to gather() to actually run it.
+# When you call it, it does NOT run immediately — it returns a coroutine object.
+# You must "await" it or pass it to gather() to actually run it.
 
 async def do_task(name, seconds):
     """Simulate a task that takes some time (like a network request)."""
@@ -98,12 +98,23 @@ async def run_with_create_task():
     print(f"Results: {[result_a, result_b, result_c]}\n")
 
 
+async def run_as_completed():
+    print("--- Start run_as_completed ---")
+    for coro in asyncio.as_completed([do_task("A", 2), do_task("B", 1), do_task("C", 3)]):
+        result = await coro
+        print(f"방금 도착: {result}")
+
+
+
+
+
 # ── Main entry point ─────────────────────────────────────────────────
 
 async def main():
     await run_sequential()
     await run_concurrent()
     await run_with_create_task()
+    await run_as_completed()
 
 
 if __name__ == "__main__":
