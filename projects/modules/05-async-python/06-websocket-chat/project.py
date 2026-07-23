@@ -88,6 +88,28 @@ async def handle_command(websocket, command: str) -> bool:
         )
         await websocket.send(help_text)
         return True
+    
+    elif cmd == "/whisper":
+        parts = arg.split(" ", 1)
+        if len(parts) < 2 or not parts[1].strip():
+            await websocket.send("Usage: /whisper <name> <message>")
+            return True
+        
+        target_name, msg = parts
+        target = None
+        for ws, name in clients.items():
+            if name == target_name:
+                target = ws
+                break
+
+        if target is None:
+            await websocket.send(f"User not found: {target_name}")
+            return True
+            
+        sender_name = clients[websocket]
+        await target.send(f"[{sender_name}]: {msg}")
+        await websocket.send(f"Message sent to {target_name}")
+        return True
 
     elif cmd == "/quit":
         await websocket.close()

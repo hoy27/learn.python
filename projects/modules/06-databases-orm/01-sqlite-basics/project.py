@@ -119,6 +119,25 @@ def get_books_by_year(conn, year):
     return cursor.fetchall()
 
 
+def update_book_year(conn, book_id, new_year):
+    cursor = conn.execute(
+        "UPDATE books SET year = ? WHERE id = ?",
+        (new_year, book_id,),
+    )
+
+    conn.commit()
+    print(f"Updated {cursor.rowcount} book(s).")
+
+def delete_book(conn, book_id):
+    cursor = conn.execute(
+        "DELETE FROM books WHERE id = ?",
+        (book_id,),
+    )
+
+    conn.commit()
+    print(f"Deleted {cursor.rowcount} book(s).")
+
+
 def search_books_by_title(conn, search_term):
     """Search for books whose title contains the search term.
 
@@ -195,6 +214,20 @@ def main():
 
     print("\n--- Dangerous input safely handled ---")
     demo_safe_query(conn, "'; DROP TABLE books; --")
+
+    print("\n--- UPDATE demo: book id 2 연도를 2099로 ---")
+    print("  [전]")
+    print_books(get_books_by_author(conn, "Robert C. Martin"))
+    update_book_year(conn, 2, 2099)
+    print("  [후]")
+    print_books(get_books_by_author(conn, "Robert C. Martin"))
+
+    print("\n--- DELETE demo: book id 5 삭제 ---")
+    print("  [전]")
+    print_books(get_all_books(conn))
+    delete_book(conn, 5)
+    print("  [후]")
+    print_books(get_all_books(conn))
 
     # Always close the connection when done.
     conn.close()

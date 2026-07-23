@@ -103,14 +103,19 @@ async def process_in_background(task_name, duration):
     This runs AFTER the response is already sent to the client.
     Useful for sending emails, writing logs, processing uploads, etc.
     """
-    await asyncio.sleep(duration)
-    entry = {
-        "task": task_name,
-        "completed_at": datetime.now().isoformat(),
-        "duration": duration,
-    }
-    task_log.append(entry)
-    print(f"  [Background] Completed: {task_name}")
+    try:
+        await asyncio.sleep(duration)
+        entry = {
+            "task": task_name,
+            "completed_at": datetime.now().isoformat(),
+            "duration": duration,
+            "status": "completed"
+        }
+        task_log.append(entry)
+        print(f"  [Background] Completed: {task_name}")
+    except Exception as exc:
+        print(f"{exc}")
+        task_log.append({"task":task_name, "duration": duration, "status": "failed"})
 
 
 @app.post("/background-job")
@@ -123,6 +128,7 @@ async def start_background_job(
     The task runs after the response is sent.
     """
     background_tasks.add_task(process_in_background, task_name, 2.0)
+    
     return {
         "message": f"Background task '{task_name}' started",
         "note": "Check /task-log in a few seconds to see the result",

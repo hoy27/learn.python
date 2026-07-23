@@ -86,9 +86,12 @@ async def process_file_async(filepath):
     """Read a file and count lines and words (asynchronous)."""
     # aiofiles.open() returns an async context manager.
     # The actual I/O happens in a thread pool so it doesn't block the event loop.
-    async with aiofiles.open(filepath, "r") as f:
-        content = await f.read()
-
+    try:
+        async with aiofiles.open(filepath, "r") as f:
+            content = await f.read()
+    except FileNotFoundError:
+        print(f"File not found: {filepath}")
+        return None
     lines = content.strip().split("\n")
     words = sum(len(line.split()) for line in lines)
     filename = os.path.basename(filepath)
@@ -110,7 +113,7 @@ async def run_async():
     results = await asyncio.gather(*tasks)
 
     elapsed = time.time() - start
-    total_words = sum(r["words"] for r in results)
+    total_words = sum(r["words"] for r in results if r is not None)
     print(f"Async total: {elapsed:.3f} seconds, {total_words} words across {len(results)} files\n")
 
 

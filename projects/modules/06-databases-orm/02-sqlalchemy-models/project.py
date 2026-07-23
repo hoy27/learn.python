@@ -17,7 +17,7 @@ older Column() style you may see in tutorials written before 2023.
 """
 
 import os
-from sqlalchemy import create_engine, select, func, ForeignKey, String, Integer, text
+from sqlalchemy import create_engine, select, func, ForeignKey, String, Integer, text, Table, Column
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -74,13 +74,40 @@ class Book(Base):
     # ForeignKey points to the authors table's id column.
     # This is how the database enforces that every book has a valid author.
     author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"), nullable=False)
+    publisher_id: Mapped[int] = mapped_column(ForeignKey("publishers.id"), nullable=True)
 
     # Many-to-one: each book has one author.
     author: Mapped["Author"] = relationship(back_populates="books")
+    publisher: Mapped["Publisher"] = relationship(back_populates="books")
+    tags: Mapped[list["Tag"]] = relationship(secondary="book_tags", back_populates="books")
 
     def __repr__(self):
         return f"Book(id={self.id}, title='{self.title}', year={self.year})"
 
+class Publisher(Base):
+    __tablename__ = "publishers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    books: Mapped[list["Book"]] = relationship(back_populates="publisher")
+
+    def __repr__(self):
+        return f"Publisher(id={self.id}, name={self.name})"
+
+
+book_tags = Table(
+    "book_tags",
+    Base.metadata,
+    Column("book_id", ForeignKey("books.id"), primary_key=True),
+    Column("tag_id", ForeignKey("tags.id"), primary_key=True),
+)
+
+class Tag(Base):
+    __tablename__ = "tags"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    books: Mapped[list["Book"]] = relationship(secondary=book_tags, back_populates="tags")
 
 # ── Database setup ────────────────────────────────────────────────────
 
@@ -108,14 +135,23 @@ def insert_sample_data(session):
     robert = Author(name="Robert C. Martin")
     luciano = Author(name="Luciano Ramalho")
 
+    pragprog = Publisher(name="Pragmatic Bookshelf")
+    prentice = Publisher(name="Prentice Hall")
+
+    programming = Tag(name="programming")
+    design = Tag(name="design")
+
     # Create Book objects and assign them to authors.
     # Setting author=david automatically sets author_id when committed.
     davids_books = [
         Book(title="The Pragmatic Programmer", year=1999, author=david),
         Book(title="Programming Pearls", year=2000, author=david),
     ]
+
+    clean_code = Book(title="Clean Code", year=2008, author=robert, publisher=prentice)
+
     roberts_books = [
-        Book(title="Clean Code", year=2008, author=robert),
+        clean_code,
         Book(title="Clean Architecture", year=2017, author=robert),
         Book(title="The Clean Coder", year=2011, author=robert),
     ]
@@ -124,11 +160,15 @@ def insert_sample_data(session):
         Book(title="Fluent Python 2nd Ed", year=2022, author=luciano),
     ]
 
+    clean_code.tags = [programming, design]
+
     # session.add_all() stages all objects for insertion.
     # SQLAlchemy figures out the correct INSERT order (authors first, then books).
     all_books = davids_books + roberts_books + lucianos_books
     session.add_all([david, robert, luciano])
     session.add_all(all_books)
+    session.add_all([pragprog, prentice])
+    session.add_all([programming, design])
 
     # commit() sends the INSERT statements to the database and saves them.
     session.commit()
@@ -147,6 +187,35 @@ def show_all_authors(session):
         # author.books is a Python list — SQLAlchemy loads it automatically.
         for book in author.books:
             print(f"    - {book.title} ({book.year})")
+
+
+def show_tags_demo(session):
+    """다대다 양방향 확인: 책→태그, 태그→책."""
+    # 책 → 태그들
+    clean_code = session.execute(
+        select(Book).where(Book.title == "Clean Code")
+    ).scalars().one()
+    tag_names = ", ".join(t.name for t in clean_code.tags)
+    print(f"  'Clean Code'의 태그: {tag_names}")
+
+    # 태그 → 책들 (반대 방향)
+    programming = session.execute(
+        select(Tag).where(Tag.name == "programming")
+    ).scalars().one()
+    book_titles = ", ".join(b.title for b in programming.books)
+    print(f"  'programming' 태그가 붙은 책: {book_titles}")
+
+
+def get_books_by_publisher(session, publisher):
+    stmt = (
+        select(Book)
+        .where(Book.publisher_id == publisher.id)
+    )
+
+    books = session.execute(stmt).scalars().all()
+    for book in books:
+        print(f"{book.title} ({book.year}) published by {book.publisher.name}")
+
 
 
 def query_books_after_year(session, year):
@@ -232,6 +301,15 @@ def main():
 
         print("\n--- ORM vs raw SQL comparison ---")
         compare_orm_vs_raw(session)
+
+        print("\n--- Query: books by publisher 'Prentice Hall' ---")
+        prentice = session.execute(
+            select(Publisher).where(Publisher.name == "Prentice Hall")
+        ).scalars().one()
+        get_books_by_publisher(session, prentice)
+
+        print("\n--- Many-to-many: tags demo ---")
+        show_tags_demo(session)
 
 
 if __name__ == "__main__":

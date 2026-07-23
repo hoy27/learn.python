@@ -54,7 +54,7 @@ class Book(Base):
     #   alembic revision --autogenerate -m "add genre column to books"
     #   alembic upgrade head
     #
-    # genre: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    genre: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     author: Mapped["Author"] = relationship(back_populates="books")
 

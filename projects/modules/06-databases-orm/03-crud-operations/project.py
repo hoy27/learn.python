@@ -90,6 +90,21 @@ def list_books(session):
         print(f"  {book.id:>3} | {book.title:<28} | {book.author:<18} | {book.status}")
 
 
+def list_checked_out(session):
+    books = session.execute(select(Book).where(Book.status == "checked out").order_by(Book.id)).scalars().all()
+
+    if not books:
+        print("No checked out books.")
+        return
+
+    print(f"\n{'Checked out books:'}")
+    print(f"  {'ID':>3} | {'Title':<28} | {'Author':<18} | {'Status'}")
+    print(f"  {'---':>3}+{'------------------------------':>30}+{'--------------------':>20}+-----------")
+    for book in books:
+        print(f"  {book.id:>3} | {book.title:<28} | {book.author:<18} | {book.status}")
+
+
+
 def search_books(session):
     """Read: search books by title or author."""
     term = input("Search term: ").strip()
@@ -170,6 +185,11 @@ def delete_book(session):
     if book is None:
         print(f"No book with ID {book_id}.")
         return
+    
+    confirm = input("Are you sure to delete? (Y/n): ").strip().lower()
+    if confirm != "y":
+        print("delete canceled")
+        return
 
     title = book.title
     session.delete(book)
@@ -191,7 +211,9 @@ Library Management System
   [3] Add a book
   [4] Update book status
   [5] Delete a book
-  [6] Quit
+  [6] List checked-out books
+
+  [q] Quit
 """
 
 
@@ -206,21 +228,22 @@ def main():
         "3": add_book,
         "4": update_status,
         "5": delete_book,
+        "6": list_checked_out
     }
 
     print(MENU)
 
     with Session(ENGINE) as session:
         while True:
-            choice = input("Choice: ").strip()
+            choice = input("Choice: ").strip().lower()
 
-            if choice == "6":
+            if choice == "q":
                 print("Goodbye!")
                 break
 
             action = actions.get(choice)
             if action is None:
-                print(f"Invalid choice: '{choice}'. Enter 1-6.")
+                print(f"Invalid choice: '{choice}'. Enter 1-6 or q.")
                 continue
 
             try:

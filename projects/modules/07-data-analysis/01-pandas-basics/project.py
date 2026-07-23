@@ -37,6 +37,12 @@ def explore_head(df):
     print("\n=== First 5 rows (head) ===")
     print(df.head())
 
+    print("\n=== First 10 rows (10?) ===")
+    print(df.head(10))
+
+    print("\n=== Last 3 rows (3?) ===")
+    print(df.head(3))
+
 
 def explore_shape(df):
     """
@@ -99,9 +105,9 @@ def select_columns(df):
     Notice the double brackets — the inner list tells pandas which
     columns you want.
     """
-    print("\n=== Selecting just name and grade columns ===")
+    print("\n=== Selecting name, subject, grade columns ===")
     # Double brackets: pass a list of column names to get a DataFrame back.
-    subset = df[["name", "grade"]]
+    subset = df[["name", "subject", "grade"]]
     print("(first 5 rows)")
     print(subset.head())
 
@@ -115,9 +121,13 @@ def sort_by_grade(df):
     The original DataFrame is not changed.
     """
     print("\n=== Sorted by grade (highest first) ===")
-    sorted_df = df.sort_values("grade", ascending=False)
-    print("(first 10 rows)")
-    print(sorted_df.head(10))
+    sorted_df_grade = df.sort_values("grade", ascending=False)
+    sorted_df_age = df.sort_values("age", ascending=False)
+    print("(grade - first 10 rows)")
+    print(sorted_df_grade.head(10))
+    print("\n=== Sorted by age (highest first) ===")
+    print("(age - first 10 rows)")
+    print(sorted_df_age.head(10))
 
 
 def main():
@@ -134,6 +144,9 @@ def main():
     explore_dtypes(df)
     explore_info(df)
     explore_describe(df)
+
+    print(df["grade"].mean())
+    print(df["grade"].max())
 
     # Step 3: Select specific columns.
     select_columns(df)

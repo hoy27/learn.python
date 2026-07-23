@@ -69,18 +69,20 @@ async def worker(name, queue, results):
         if job is None:
             print(f"  [{name}] Shutting down")
             break
-
+            
         # Simulate processing time (0.2 to 1.0 seconds).
-        process_time = random.uniform(0.2, 1.0)
-        await asyncio.sleep(process_time)
-
-        result = f"{job} -> done by {name}"
-        results.append(result)
-        print(f"  [{name}] Processed: {job} (took {process_time:.1f}s)")
-
+        try:
+            process_time = random.uniform(0.2, 1.0)
+            await asyncio.sleep(process_time)
+            result = f"{job} -> done by {name}"
+            results.append(result)
+            print(f"  [{name}] Processed: {job} (took {process_time:.1f}s)")
+        except Exception as exc:
+            print(f"[{name}] 작업 실패: {job} ({exc})")
         # Tell the queue this job is done.
         # This is used by queue.join() to know when all work is complete.
-        queue.task_done()
+        finally:
+            queue.task_done()
 
 
 # ── Run the producer-consumer pipeline ───────────────────────────────

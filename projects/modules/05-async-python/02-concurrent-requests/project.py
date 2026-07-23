@@ -60,19 +60,22 @@ async def fetch_one(session, post_id):
     req_start = time.time()
 
     # "async with" ensures the response is properly closed after use.
-    async with session.get(f"{BASE_URL}/posts/{post_id}") as response:
-        data = await response.json()
-        elapsed = time.time() - req_start
-
-        title = data["title"][:30]
-        print(f"  Fetched post {post_id}: \"{title}...\" in {elapsed:.2f}s")
-        return data
+    try:
+        async with session.get(f"{BASE_URL}/posts/{post_id}") as response:
+            data = await response.json()
+            elapsed = time.time() - req_start
+            title = data["title"][:30]
+            print(f"  Fetched post {post_id}: \"{title}...\" in {elapsed:.2f}s")
+            return data
+    except (KeyError, aiohttp.ClientError, asyncio.TimeoutError) as exc:
+        print(f"post {post_id} 실패: {exc}")
+        return None
 
 
 async def fetch_async():
     print("--- Async requests (all at once) ---")
     start = time.time()
-
+    
     # ClientSession manages connection pooling — it reuses connections
     # to the same server instead of opening a new one each time.
     async with aiohttp.ClientSession() as session:
