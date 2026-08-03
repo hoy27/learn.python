@@ -32,12 +32,25 @@ def filter_high_grades(df, threshold=80):
 
     # This creates a boolean Series: True where grade > threshold, False elsewhere.
     mask = df["grade"] > threshold
+    mask_custom = (df["age"] > 16) & (df["grade"] > 85)
+    mask_90 = df["grade"] > 90
 
     # Passing that mask into df[...] keeps only the True rows.
     high_performers = df[mask]
+    high_performers_custom = df[mask_custom]
+    high_performers_90 = df[mask_90]
+    
 
     print(f"Found {len(high_performers)} students with grade above {threshold}")
     print(high_performers)
+
+    print(f"Found {len(high_performers_custom)} students with grade above (age > 16 & grade > 85)")
+    print(high_performers_custom)
+
+    print(f"Found {len(high_performers_90)} students with grade above 90")
+    print(high_performers_90)
+
+
     return high_performers
 
 
@@ -87,6 +100,10 @@ def group_by_subject_mean(df):
     print("\n=== Group by subject — mean grade ===")
     means = df.groupby("subject")["grade"].mean()
     print(means)
+
+    print("\n=== Group by age — mean grade ===")
+    means_by_age = df.groupby("age")["grade"].mean()
+    print(means_by_age)
     return means
 
 
@@ -103,7 +120,7 @@ def group_by_subject_multi_agg(df):
 
     # agg() accepts a list of aggregation function names.
     # Each one becomes a column in the result.
-    result = df.groupby("subject")["grade"].agg(["mean", "max", "min"])
+    result = df.groupby("subject")["grade"].agg(["mean", "max", "min", "std"])
 
     # Round the mean for cleaner display.
     result["mean"] = result["mean"].round(2)

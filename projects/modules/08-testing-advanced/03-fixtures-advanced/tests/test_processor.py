@@ -37,6 +37,11 @@ def test_load_config_reads_env_vars(monkeypatch):
     assert config["strip_whitespace"] is False
     assert config["output_dir"] == "/custom/path"
 
+def test_load_config_reads_debug(debug_env):
+    proc = FileProcessor()
+    config = proc.load_config()
+    assert config["debug"] is True
+
 
 # WHY: When no environment variables are set, the defaults should apply.
 # monkeypatch.delenv ensures variables are absent even if they happen
@@ -169,3 +174,10 @@ def test_full_pipeline(monkeypatch, tmp_path):
     # Verify the final output.
     content = output_file.read_text()
     assert content == "HELLO\nWORLD\n"
+
+
+def test_config_a(sample_config):
+    assert sample_config["mode"] == "uppercase"
+
+def test_config_b(sample_config):
+    assert sample_config["strip_whitespace"] is True

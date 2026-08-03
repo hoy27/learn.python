@@ -67,6 +67,17 @@ class WeatherService:
         # {"location": {"city": "London"}, "current": {"temp_c": 15.5}}
         return data["current"]["temp_c"]
 
+    def get_humidity(self, city):
+        url = f"{API_BASE_URL}/current"
+        params = {"city": city, "key": self.api_key}
+
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        return data["current"]["humidity"]
+    
+
     def get_forecast(self, city, days=3):
         """
         Get a multi-day weather forecast for a city.

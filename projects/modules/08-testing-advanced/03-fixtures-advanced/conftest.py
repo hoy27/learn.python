@@ -20,7 +20,7 @@ from project import FileProcessor
 
 # ── Fixtures ────────────────────────────────────────────────────────────
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_config():
     """
     Provide a dictionary of configuration values for testing.
@@ -33,7 +33,6 @@ def sample_config():
         "strip_whitespace": True,
         "output_dir": "test_output",
     }
-
 
 @pytest.fixture
 def processor():
@@ -102,3 +101,7 @@ def multi_file_dir(tmp_path):
     (tmp_path / "file3.txt").write_text("third file content\n")
 
     return tmp_path
+
+@pytest.fixture
+def debug_env(monkeypatch):
+    monkeypatch.setenv("APP_DEBUG", "true")

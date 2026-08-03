@@ -33,6 +33,10 @@ class TodoResponse(BaseModel):
     title: str
     done: bool
 
+class TodoUpdate(BaseModel):
+    title: str
+    done: bool
+
 
 # ── Application Factory ────────────────────────────────────────────────
 # We use a factory function instead of a module-level app so that tests
@@ -59,14 +63,17 @@ def create_app():
     # ── Endpoints ───────────────────────────────────────────────────
 
     @app.get("/todos", response_model=list[TodoResponse])
-    def list_todos():
+    def list_todos(done: bool | None = None):
         """
         Return all todos as a list.
 
         This endpoint always succeeds — if there are no todos, it
         returns an empty list (not an error).
         """
-        return list(todos.values())
+        result = list(todos.values())
+        if done is not None:
+            result = [t for t in result if t["done"] == done]
+        return result
 
     @app.post("/todos", response_model=TodoResponse, status_code=201)
     def create_todo(todo: TodoCreate):
@@ -99,6 +106,15 @@ def create_app():
         if todo_id not in todos:
             raise HTTPException(status_code=404, detail="Todo not found")
         return todos[todo_id]
+
+    @app.put("/todos/{todo_id}", response_model=TodoResponse)
+    def update_todo(todo_id: int, todo: TodoUpdate):
+        if todo_id not in todos:
+            raise HTTPException(status_code=404, detail="Todo not found")
+
+        todos[todo_id] = { "id": todo_id, "title": todo.title, "done": todo.done }
+        return todos[todo_id]
+
 
     @app.delete("/todos/{todo_id}", status_code=204)
     def delete_todo(todo_id: int):

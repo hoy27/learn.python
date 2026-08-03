@@ -55,6 +55,11 @@ def test_sort_elements_are_ordered(lst):
     for i in range(len(result) - 1):
         assert result[i] <= result[i + 1]
 
+# 정렬 결과의 모든 원소가 원본에 있는지 확인
+@given(st.lists(st.integers()))
+def test_original_values_are_exist(lst):
+    assert sorted(sort_list(lst)) == sorted(lst)
+
 
 # ── reverse_string properties ──────────────────────────────────────────
 
@@ -78,6 +83,13 @@ def test_reverse_preserves_length(s):
     """Reversing should not change the string length."""
     assert len(reverse_string(s)) == len(s)
 
+
+# 문자 집합 보존 속성 테스트 작성
+# reverse_string에 대해 알파벳 문자만 생성해서 테스트하고, 뒤집기가 문자 set을 보존하는지 검증
+@given(st.text(alphabet=st.characters(whitelist_categories=("L",))))
+def test_reverse_preserves_charset(s):
+    assert set(reverse_string(s)) == set(s)
+    
 
 # ── encode_decode_json properties ───────────────────────────────────────
 
@@ -147,3 +159,13 @@ def test_merge_dicts_second_wins_on_conflict(dict_a, dict_b):
     for key, value in dict_a.items():
         if key not in dict_b:
             assert result[key] == value
+
+
+# dict 2개 받아서, 결과 길이가 두 입력 길이의 합 이하인지 검증하는 테스트
+@given(
+    st.dictionaries(st.text(min_size=1), st.integers()),
+    st.dictionaries(st.text(min_size=1), st.integers()),
+)
+def test_merge_length_at_most_sum(dict_a, dict_b):
+    result = merge_dicts(dict_a, dict_b)
+    assert len(result) <= len(dict_a) + len(dict_b)

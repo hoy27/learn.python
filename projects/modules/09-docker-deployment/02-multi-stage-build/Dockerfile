@@ -37,14 +37,14 @@ WORKDIR /build
 # We install packages here so they live in a single directory (/build/.venv)
 # that we can copy cleanly into the production stage.
 # --------------------------------------------------------------------------
-RUN python -m venv /build/.venv
+RUN python -m venv /app/.venv
 
 # --------------------------------------------------------------------------
 # Activate the virtual environment by prepending it to PATH.
 # Every subsequent RUN command in this stage will use the venv's Python
 # and pip instead of the system ones.
 # --------------------------------------------------------------------------
-ENV PATH="/build/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 
 # --------------------------------------------------------------------------
 # Copy and install dependencies in the builder stage.
@@ -79,7 +79,7 @@ WORKDIR /app
 # --from=builder tells Docker to copy from the first stage, not from the
 # build context (your local filesystem).
 # --------------------------------------------------------------------------
-COPY --from=builder /build/.venv /app/.venv
+COPY --from=builder /app/.venv /app/.venv
 
 # --------------------------------------------------------------------------
 # Add the virtual environment to PATH so Python finds the installed packages.

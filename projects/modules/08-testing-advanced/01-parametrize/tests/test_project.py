@@ -32,6 +32,7 @@ from project import validate_email, celsius_to_fahrenheit, is_palindrome, clamp
         ("@missing-local.com", False),        # Nothing before @
         ("missing-domain@", False),           # Nothing after @
         ("double@@at.com", False),            # Two @ symbols
+        ("user@mail.co.kr", True),
         ("spaces in@email.com", False),       # Spaces are invalid
         (123, False),                         # Non-string input
         (None, False),                        # None input
@@ -39,7 +40,7 @@ from project import validate_email, celsius_to_fahrenheit, is_palindrome, clamp
     ids=[
         "minimal-valid", "standard", "plus-addressing",
         "empty-string", "no-at", "no-local-part", "no-domain",
-        "double-at", "spaces", "integer-input", "none-input",
+        "double-at", "multiple dots", "spaces", "integer-input", "none-input",
     ],
 )
 def test_validate_email_edge_cases(email, expected):
@@ -119,11 +120,12 @@ def test_is_palindrome_various_inputs(text, expected):
         (0, 0, 10, 0),      # Exactly at min — boundary case
         (10, 0, 10, 10),    # Exactly at max — boundary case
         (5, 5, 5, 5),       # Min equals max — only one valid value
+        (7, 0, 5, 5),
         (-10, -20, -5, -10),  # Negative range
     ],
     ids=[
         "in-range", "below-min", "above-max", "at-min",
-        "at-max", "min-equals-max", "negative-range",
+        "at-max", "min-equals-max", "test-alter-1", "negative-range",
     ],
 )
 def test_clamp_boundary_conditions(value, min_val, max_val, expected):
@@ -144,3 +146,16 @@ def test_clamp_raises_on_invalid_range():
     """
     with pytest.raises(ValueError, match="must not be greater"):
         clamp(5, 10, 0)
+
+
+@pytest.mark.parametrize(
+    "value, min_val, max_val",
+    [
+        (5, 10, 0),
+        (0, 100, -100),
+    ],
+    ids=["test-1", "test-2"],
+)
+def test_clamp_raises_parametrized(value, min_val, max_val):
+    with pytest.raises(ValueError):
+        clamp(value, min_val, max_val)

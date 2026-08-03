@@ -27,7 +27,7 @@ import signal
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
@@ -196,6 +196,16 @@ def health_check():
         "version": settings.APP_VERSION,
     }
 
+@app.get("/ready")
+def ready_check():
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+    except Exception:
+        raise HTTPException(status_code=503, detail="Unavailable")
+
+    return {"status": "ready"}
 
 # ----------------------------------------------------------------------------
 # Route 3: GET /config

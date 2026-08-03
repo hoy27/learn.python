@@ -154,6 +154,14 @@ def get_item(item_id: int, db: Session = Depends(get_db)):
     return item
 
 
+@app.delete("/items/{item_id}", status_code=204)
+def delete_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.get(Item, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(item)
+    db.commit()
+
 # ----------------------------------------------------------------------------
 # Local development entry point.
 # When running with Docker, uvicorn is started by the CMD in the Dockerfile.

@@ -16,7 +16,7 @@
 #   http://127.0.0.1:8000/health — health check
 #   http://127.0.0.1:8000/docs   — interactive API documentation
 # ============================================================================
-
+import sys
 from fastapi import FastAPI
 
 # ----------------------------------------------------------------------------
@@ -53,6 +53,10 @@ def health_check():
     """Health check endpoint for container orchestrators."""
     return {"status": "healthy"}
 
+
+@app.get("/info")
+def get_info():
+    return {"container": True, "python_version": f"{sys.version_info.major}.{sys.version_info.minor}" }
 
 # ----------------------------------------------------------------------------
 # Run the server when executed directly (local development without Docker).

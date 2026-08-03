@@ -190,6 +190,15 @@ def main():
     # Step 7: Save the cleaned result.
     save_cleaned_data(df, "data/cleaned_sales.csv")
 
+    df["total"] = df["quantity"] * df["price"]
+
+    print(f"\ncategory counts:")
+    print(df["category"].value_counts())
+
+    print(f"\nTOTAL:")
+    print(df[["quantity", "price", "total"]].head())
+
+
     # Final summary.
     print(f"\nDone. Cleaned 51 messy rows down to {len(df)} clean rows.")
 

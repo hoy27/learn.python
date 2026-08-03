@@ -77,6 +77,34 @@ def test_get_temperature_success(mock_get):
     mock_get.assert_called_once()
 
 
+@patch("project.requests.get")
+def test_get_humidity_success(mock_get):
+    mock_get.return_value = make_mock_response({
+        "current": {"humidity": 72}
+    })
+
+    service = WeatherService(api_key="test-key")
+    humidity = service.get_humidity("London")
+
+    assert humidity == 72
+    mock_get.assert_called_once()
+
+@patch("project.requests.get")
+def test_get_temperature_then_timeout(mock_get):
+    mock_get.side_effect = [
+        make_mock_response({"current": { "temp_c": 15.5 }}),
+        requests.exceptions.Timeout("Connection timed out"),
+    ]
+
+    service = WeatherService()
+
+    assert service.get_temperature("London") == 15.5
+
+    with pytest.raises(requests.exceptions.Timeout):
+        service.get_temperature("London")
+
+
+
 # WHY: APIs return error codes when something goes wrong (city not found,
 # server error, etc.). Our code must handle these gracefully.
 

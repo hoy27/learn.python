@@ -42,7 +42,6 @@ on:
 # Jobs run in parallel by default. Use "needs" to run them sequentially.
 # --------------------------------------------------------------------------
 jobs:
-
   # ========================================================================
   # Job 1: lint
   # ========================================================================
@@ -120,6 +119,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Print Python version
+        run: python --version
 
       # ------------------------------------------------------------------
       # Install all project dependencies.

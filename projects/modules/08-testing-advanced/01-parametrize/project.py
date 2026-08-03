@@ -105,7 +105,7 @@ def clamp(value, min_val, max_val):
 if __name__ == "__main__":
     # Email validation examples
     print("=== Email Validation ===")
-    test_emails = ["user@example.com", "bad-email", "", "a@b.c", "@missing.com"]
+    test_emails = ["user@example.com", "bad-email", "", "a@b.c", "@missing.com", "user@mail.co.kr"]
     for email in test_emails:
         print(f"  {email!r:30s} -> {validate_email(email)}")
 
@@ -123,6 +123,6 @@ if __name__ == "__main__":
 
     # Clamp examples
     print("\n=== Clamp ===")
-    test_clamps = [(5, 0, 10), (-3, 0, 10), (15, 0, 10), (5, 5, 5)]
+    test_clamps = [(5, 0, 10), (-3, 0, 10), (15, 0, 10), (5, 5, 5), (7, 0, 5)]
     for value, lo, hi in test_clamps:
         print(f"  clamp({value}, {lo}, {hi}) -> {clamp(value, lo, hi)}")

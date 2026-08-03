@@ -27,20 +27,22 @@ import os
 
 class Settings:
     """Application settings loaded from environment variables."""
+    def __init__(self):
+
 
     # ------------------------------------------------------------------------
     # APP_NAME: identifies the application in logs and health checks.
     # Default: "production-app" (suitable for local development).
     # Override in production: APP_NAME=my-production-service
     # ------------------------------------------------------------------------
-    APP_NAME: str = os.environ.get("APP_NAME", "production-app")
+        self.APP_NAME: str = os.environ.get("APP_NAME", "production-app")
 
     # ------------------------------------------------------------------------
     # APP_VERSION: the application version. Used in health check responses.
     # Default: "1.0.0".
     # In CI/CD, you might set this to the git commit SHA or a release tag.
     # ------------------------------------------------------------------------
-    APP_VERSION: str = os.environ.get("APP_VERSION", "1.0.0")
+        self.APP_VERSION: str = os.environ.get("APP_VERSION", "1.0.0")
 
     # ------------------------------------------------------------------------
     # DEBUG: enables debug mode (verbose logging, auto-reload).
@@ -49,7 +51,7 @@ class Settings:
     # NEVER run with DEBUG=true in production. Debug mode exposes detailed
     # error messages that could help attackers understand your system.
     # ------------------------------------------------------------------------
-    DEBUG: bool = os.environ.get("DEBUG", "false").lower() == "true"
+        self.DEBUG: bool = os.environ.get("DEBUG", "false").lower() == "true"
 
     # ------------------------------------------------------------------------
     # LOG_LEVEL: controls how verbose the application logs are.
@@ -58,7 +60,7 @@ class Settings:
     # In development: LOG_LEVEL=DEBUG (see everything).
     # In production:  LOG_LEVEL=INFO (see important events, skip noise).
     # ------------------------------------------------------------------------
-    LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "INFO").upper()
+        self.LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "INFO").upper()
 
     # ------------------------------------------------------------------------
     # DATABASE_URL: the connection string for the database.
@@ -68,15 +70,15 @@ class Settings:
     # The password is part of this URL, which is why it MUST come from an
     # environment variable and never be hardcoded in source code.
     # ------------------------------------------------------------------------
-    DATABASE_URL: str = os.environ.get("DATABASE_URL", "sqlite:///./local.db")
+        self.DATABASE_URL: str = os.environ.get("DATABASE_URL", "sqlite:///./local.db")
 
     # ------------------------------------------------------------------------
     # HOST and PORT: where the server listens.
     # HOST=0.0.0.0 means "accept connections from any network interface."
     # In Docker, this is required so the host machine can reach the container.
     # ------------------------------------------------------------------------
-    HOST: str = os.environ.get("HOST", "0.0.0.0")
-    PORT: int = int(os.environ.get("PORT", "8000"))
+        self.HOST: str = os.environ.get("HOST", "0.0.0.0")
+        self.PORT: int = int(os.environ.get("PORT", "8000"))
 
     # ------------------------------------------------------------------------
     # ALLOWED_ORIGINS: comma-separated list of origins allowed by CORS.
@@ -86,9 +88,9 @@ class Settings:
     # Default: "*" allows all origins (fine for development).
     # Production: ALLOWED_ORIGINS=https://myapp.com,https://admin.myapp.com
     # ------------------------------------------------------------------------
-    ALLOWED_ORIGINS: list[str] = os.environ.get(
-        "ALLOWED_ORIGINS", "*"
-    ).split(",")
+        self.ALLOWED_ORIGINS: list[str] = os.environ.get(
+            "ALLOWED_ORIGINS", "*"
+        ).split(",")
 
     # ------------------------------------------------------------------------
     # WORKERS: number of uvicorn worker processes.
@@ -98,7 +100,7 @@ class Settings:
     # Rule of thumb: 2 * CPU cores + 1.
     # Default: 1 (suitable for development and small deployments).
     # ------------------------------------------------------------------------
-    WORKERS: int = int(os.environ.get("WORKERS", "1"))
+        self.WORKERS: int = int(os.environ.get("WORKERS", "1"))
 
 
 # ----------------------------------------------------------------------------

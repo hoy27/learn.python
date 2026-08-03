@@ -133,17 +133,17 @@ def create_scatter_plot(df):
 
 def create_combined_figure(df):
     """
-    Create a 2x2 subplot combining all four chart types.
+    Create a 2x3 subplot combining all four chart types.
 
-    subplots(2, 2) creates a grid of 4 axes inside a single figure.
+    subplots(2, 3) creates a grid of 6 axes inside a single figure.
     This is how you build multi-panel figures for reports and presentations.
     The axes are returned as a 2D array: axes[row][col].
     """
-    print("\n=== Chart 4: Combined 2x2 subplot ===")
+    print("\n=== Chart 4: Combined 2x3 subplot ===")
 
     # Create a 2x2 grid of subplots.
     # figsize controls the overall dimensions in inches.
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 
     # Panel 1 (top-left): Bar chart of average grade by subject.
     avg_by_subject = df.groupby("subject")["grade"].mean()
@@ -162,6 +162,7 @@ def create_combined_figure(df):
     axes[0][1].set_ylabel("Grade")
     axes[0][1].legend(fontsize=8)
 
+
     # Panel 3 (bottom-left): Scatter plot of age vs grade.
     colors = {"Math": "#3498db", "Science": "#e74c3c", "English": "#2ecc71"}
     for subject, color in colors.items():
@@ -178,6 +179,11 @@ def create_combined_figure(df):
     axes[1][1].set_title("Grade Distribution")
     axes[1][1].set_xlabel("Grade")
     axes[1][1].set_ylabel("Frequency")
+    axes[1][1].axvline(x=df["grade"].mean(), color="red", linestyle="--", label="Mean")
+
+    # Panel 5 (custom)
+    axes[0][2].bar(avg_by_subject.index, avg_by_subject.values,
+                   color=["#3498db", "#e74c3c", "#2ecc71"])
 
     # Add an overall title for the whole figure.
     fig.suptitle("Student Performance Dashboard", fontsize=16, fontweight="bold", y=1.02)

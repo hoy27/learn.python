@@ -48,6 +48,8 @@ class FileProcessor:
             # APP_OUTPUT_DIR is where processed files are saved.
             # Default is "output" (relative to the current directory).
             "output_dir": os.environ.get("APP_OUTPUT_DIR", "output"),
+
+            "debug": os.environ.get("APP_DEBUG", "false").lower() == "true",
         }
         return self.config
 

@@ -1,0 +1,18 @@
+# Compose auto-merges this on top of docker-compose.yml.
+# !override replaces the ports list instead of appending to it.
+services:
+  web:
+    ports: !override
+      - "8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+      start_period: 1s
+    ports: !override
+      - "5433:5432"

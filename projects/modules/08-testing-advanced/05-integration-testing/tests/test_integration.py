@@ -86,6 +86,18 @@ def test_create_and_retrieve_todo(client):
     assert get_response.json()["id"] == todo_id
 
 
+def test_update_todo(client):
+    todo_id = client.post("/todos", json={"title": "old"}).json()["id"]
+
+    resp = client.put(f"/todos/{todo_id}", json={"title": "new", "done": True})
+
+    assert resp.status_code == 200
+    assert resp.json()["title"] == "new"
+    assert resp.json()["done"] is True
+    
+
+    
+
 # ── Delete todo ─────────────────────────────────────────────────────────
 
 # WHY: Deletion must actually remove the resource. We verify this by
@@ -128,6 +140,13 @@ def test_create_todo_invalid_input(client):
 
     assert response.status_code == 422
 
+def test_create_five_todos(client):
+    for i in range(5):
+        client.post("/todos", json={"title": f"todo {i}"})
+
+    resp = client.get("/todos")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 5
 
 # ── Full CRUD flow ──────────────────────────────────────────────────────
 
@@ -164,3 +183,14 @@ def test_full_crud_flow(client):
 
     # 6. Verify the first is gone.
     assert client.get(f"/todos/{id1}").status_code == 404
+
+
+def test_filter_done_todos(client):
+    id1 = client.post("/todos", json={"title": "A"}).json()["id"]
+    id2 = client.post("/todos", json={"title": "B"}).json()["id"]
+
+    client.put(f"/todos/{id1}", json={"title": "A", "done": True})
+
+    resp = client.get("/todos?done=true")
+    assert len(resp.json()) == 1
+    assert resp.json()[0]["id"] == id1
