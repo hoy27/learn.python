@@ -91,6 +91,30 @@ def add_book(request):
     return render(request, "bookstore/add_book.html", {"form": form})
 
 
+@login_required
+def edit_book(request, pk):
+
+    book = get_object_or_404(Book, pk=pk)
+
+    if request.method == "POST":
+            form = BookForm(request.POST, instance=book)
+            if form.is_valid():
+                form.save()
+                return redirect("book_list")
+    else:
+        form = BookForm(instance=book)
+
+    return render(request, "bookstore/add_book.html", {"form": form})
+
+@login_required
+def delete_book(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+    if request.method == "POST":
+        book.delete()
+        return redirect("book_list")
+    return render(request, "bookstore/confirm_delete.html", {"book": book}) 
+
+
 # ----------------------------------------------------------------------------
 # Registration View — Creating new user accounts
 #

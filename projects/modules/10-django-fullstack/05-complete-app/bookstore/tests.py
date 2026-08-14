@@ -79,6 +79,9 @@ class BookModelTest(TestCase):
         self.assertEqual(books[0], self.book)
         self.assertEqual(books[1], older_book)
 
+    def test_author_bio(self):
+        self.assertEqual(self.author.bio, "A test biography.")
+
 
 class BookViewTest(TestCase):
     """Tests for the HTML views.

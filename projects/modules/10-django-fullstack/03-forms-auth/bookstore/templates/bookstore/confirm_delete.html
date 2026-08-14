@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete "{{ book.title }}"?</title>
+  </head>
+  <body>
+    <h1>정말 삭제할까요?</h1>
+    <p>
+      <strong>"{{ book.title }}"</strong> by {{ book.author }} — 이 책을 삭제하면
+      되돌릴 수 없습니다.
+    </p>
+
+    <!-- GET으로 이 페이지를 보여주고, 실제 삭제는 아래 POST 폼으로만 실행됨 -->
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">네, 삭제합니다</button>
+      <a href="{% url 'book_detail' book.pk %}">취소</a>
+    </form>
+  </body>
+</html>

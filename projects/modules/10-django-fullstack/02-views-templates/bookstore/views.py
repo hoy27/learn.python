@@ -49,6 +49,19 @@ def book_list(request):
     # 3. The context dictionary (variables available in the template)
     return render(request, "bookstore/book_list.html", {"books": books})
 
+def book_search(request):
+
+    q = request.GET.get("q", "")
+
+    books = Book.objects.filter(title__icontains=q)
+
+
+    # render() takes three arguments:
+    # 1. The request object (required by Django's template engine)
+    # 2. The template path (relative to any templates/ directory)
+    # 3. The context dictionary (variables available in the template)
+    return render(request, "bookstore/book_list.html", {"books": books, "query": q})
+
 
 # ----------------------------------------------------------------------------
 # View 2: Book Detail

@@ -28,5 +28,6 @@ urlpatterns = [
     # /books/<int:pk>/ -> detail for one book
     # <int:pk> is a path converter. "int" ensures the value is a number.
     # "pk" is the parameter name passed to the view function.
+    path("search/", views.book_search, name="book_search"),
     path("<int:pk>/", views.book_detail, name="book_detail"),
 ]

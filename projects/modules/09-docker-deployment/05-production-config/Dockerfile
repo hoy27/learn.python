@@ -22,8 +22,8 @@ FROM python:3.12-slim AS builder
 WORKDIR /build
 
 # Create a virtual environment for clean dependency isolation.
-RUN python -m venv /build/.venv
-ENV PATH="/build/.venv/bin:$PATH"
+RUN python -m venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Install dependencies in the builder stage.
 COPY requirements.txt .
@@ -56,7 +56,7 @@ WORKDIR /app
 # --------------------------------------------------------------------------
 # Copy the virtual environment from the builder stage.
 # --------------------------------------------------------------------------
-COPY --from=builder /build/.venv /app/.venv
+COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
 # --------------------------------------------------------------------------

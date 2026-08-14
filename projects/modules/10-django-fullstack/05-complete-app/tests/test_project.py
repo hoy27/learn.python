@@ -148,7 +148,7 @@ class AuthTest(TestCase):
         WHY: @login_required must actually enforce authentication. Without
         testing, a missing decorator would go unnoticed.
         """
-        response = self.client.get("/add/")
+        response = self.client.get("/books/add/")
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url.lower())
@@ -163,7 +163,7 @@ class AuthTest(TestCase):
         User.objects.create_user(username="user", password="Pass123!")
         self.client.login(username="user", password="Pass123!")
 
-        response = self.client.get("/add/")
+        response = self.client.get("/books/add/")
 
         self.assertEqual(response.status_code, 200)
 

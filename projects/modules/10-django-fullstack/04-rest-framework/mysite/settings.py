@@ -106,4 +106,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
+    # ALTER: 페이지네이션 — 한 번에 PAGE_SIZE개씩 (데모용 1)
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 1,
 }
